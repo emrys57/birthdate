@@ -1,0 +1,39 @@
+<!--
+To change this template, choose Tools | Templates
+and open the template in the editor.
+-->
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <link rel="stylesheet" type="text/css" href="localcss.css" />
+        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+        <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/knockout/2.3.0/knockout-min.js'></script>
+        <script type='text/javascript' src='birthdate.js'></script>
+    </head>
+    <body>
+        <h1>Birthdate and Age Calculator</h1>
+        <div class="parmTitle">
+            Age:
+        </div>
+        <input type="text" data-bind="value: ageYears"/>
+        <input type="text" data-bind="value: ageMonths"/>
+        <input type="text" data-bind="value: ageWeeks"/>
+        <input type="text" data-bind="value: ageDays"/><br />
+        <div class="parmTitle">
+            On date:
+        </div>
+        <input type="text" data-bind="{value: onDate1Year, css: { invalid: !onDate1YSet() }}">
+        <input type="text" data-bind="value: onDate1Month">
+        <input type="text" data-bind="value: onDate1Day">
+        <br />
+        <div class="parmTitle">onDate1Y:</div> <div class="ib" data-bind="text: onDate1Y"></div><br />
+        <div class="parmTitle">onDate1YSet:</div> <div class="ib" data-bind="text: onDate1YSetReadout"></div><br />
+        <div class="parmTitle">
+            Birthdate:
+        </div>
+        <input type="text" data-bind="value: birthdate">
+
+    </body>
+</html>

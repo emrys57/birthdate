@@ -1,0 +1,24 @@
+/* 
+    Document   : localcss
+    Created on : 18-Sep-2013, 22:17:29
+    Author     : emryswilliams
+    Description:
+        Purpose of the stylesheet follows.
+*/
+
+root { 
+    display: block;
+}
+
+.parmTitle {
+    display: inline-block;
+    width: 100px;
+}
+
+.invalid {
+    background-color: rgba(255,0,0, 0.1);
+}
+
+.ib {
+    display: inline-block;
+}
