@@ -24,12 +24,32 @@ and open the template in the editor.
         <div class="parmTitle">
             On date:
         </div>
-        <input type="text" data-bind="{value: onDate1Year, css: { invalid: !onDate1YSet() }}">
-        <input type="text" data-bind="value: onDate1Month">
-        <input type="text" data-bind="value: onDate1Day">
+        <input type="text" data-bind="{value: onDate1Year, valueUpdate: 'afterkeydown', css: { invalid: !onDate1YSet() }}">
+        <input type="text" data-bind="{value: onDate1Month, valueUpdate: 'afterkeydown', css: { invalid: !onDate1MValid()}}">
+        <input type="text" data-bind="{value: onDate1Day, valueUpdate: 'afterkeydown', css: { invalid: !onDate1DValid()}}">
         <br />
-        <div class="parmTitle">onDate1Y:</div> <div class="ib" data-bind="text: onDate1Y"></div><br />
-        <div class="parmTitle">onDate1YSet:</div> <div class="ib" data-bind="text: onDate1YSetReadout"></div><br />
+        <div class="parmTitle">onDate1YSet:</div> 
+        <div class="ib" data-bind="text: onDate1YSetReadout"></div>
+        <br />
+        <div class="parmTitle">onDate1Min:</div>
+        <div class="ib" data-bind="text: onDate1YMin"></div>
+        <div class="ib" data-bind="text: onDate1MMin"></div>
+        <div class="ib" data-bind="text: onDate1DMin"></div>
+        <br /><div class="parmTitle">onDate1Max:</div>
+        <div class="ib" data-bind="text: onDate1YMax"></div>
+        <div class="ib" data-bind="text: onDate1MMax"></div>
+        <div class="ib" data-bind="text: onDate1DMax"></div>
+        <br />
+        <div class="parmTitle">
+            Earliest:
+        </div>
+        <div class="ib" data-bind="text: onEarliestDate"></div>
+        <br />
+        <div class="parmTitle">
+            Latest:
+        </div>
+        <div class="ib" data-bind="text: onLatestDate"></div>
+        <br />
         <div class="parmTitle">
             Birthdate:
         </div>
