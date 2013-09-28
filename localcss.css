@@ -21,5 +21,9 @@ root {
 
 .ib {
     display: inline-block;
+}
+
+.column {
+    display: inline-block;
     width: 130px;
 }

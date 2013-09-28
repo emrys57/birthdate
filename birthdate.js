@@ -1,7 +1,9 @@
-/* 
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
+// Age and Birthdate
+// Hold old are you?
+// "I'm four!"
+// That means that the age could be anything from 4 years and 0ms to 5years minus 1ms.
+// "She's 10 weeks now." That means 10 weeks and 0ms to 11 weeks less 1ms.
+// "He's 3 weeks and 2 days" means 23 days and 0ms to 24 days less 1ms.
 var $ = (function(my) {
     return my;
 }(jQuery || {}));
@@ -14,11 +16,11 @@ var M$ = (function(my) {
         var self = this;
         var onDateText = '1999';
         function isLeapYear(y) {
-            if ((y % 4) != 0)
+            if ((y % 4) !== 0)
                 return false;
-            if (y == 2000)
+            if (y === 2000)
                 return true;
-            if ((y % 100) == 0)
+            if ((y % 100) === 0)
                 return false;
             return true;
         }
@@ -26,6 +28,128 @@ var M$ = (function(my) {
         self.ageMonths = ko.observable();
         self.ageWeeks = ko.observable();
         self.ageDays = ko.observable();
+        self.ageY = ko.observable();
+        self.ageYValid = ko.observable();
+        self.ageYSet = ko.computed(function() {
+            var trimmed2 = ('' + self.ageYears()).trim();
+            var trimmed = trimmed2.replace(/[^0-9]/g, '');
+            if ((trimmed === '') || (trimmed !== trimmed2)) {
+                self.ageY(0);
+                self.ageYValid(true);
+                return false;
+            } else {
+                var y = Math.floor(trimmed);
+                if (y > 130) {
+                    self.ageY(y);
+                    self.ageYValid(false);
+                    return false;
+                } else {
+                    self.ageY(y);
+                    self.ageYValid(true);
+                    return true;
+                }
+            }
+        });
+        self.ageM = ko.observable();
+        self.ageMValid = ko.observable();
+        self.ageMSet = ko.computed(function() {
+            var trimmed2 = ('' + self.ageMonths()).trim();
+            var trimmed = trimmed2.replace(/[^0-9]/g, '');
+            if ((trimmed === '') || (trimmed !== trimmed2)) {
+                self.ageM(0);
+                self.ageMValid(true);
+                return false;
+            } else {
+                var y = Math.floor(trimmed);
+                if (self.ageY() === 0) {
+                    if (y > 60) {
+                        self.ageM(0);
+                        self.ageMValid(false);
+                        return false;
+                    }
+                } else {
+                    if (y > 11) {
+                        self.ageM(0);
+                        self.ageMValid(false);
+                        return false;
+                    }
+                }
+                self.ageM(y);
+                self.ageMValid(true);
+                return true;
+            }
+        });
+        self.ageW = ko.observable();
+        self.ageWValid = ko.observable();
+        self.ageWSet = ko.computed(function() {
+            var trimmed2 = ('' + self.ageWeeks()).trim();
+            var trimmed = trimmed2.replace(/[^0-9]/g, '');
+            if ((trimmed === '') || (trimmed !== trimmed2)) {
+                self.ageW(0);
+                self.ageWValid(true);
+                return false;
+            } else {
+                var y = Math.floor(trimmed);
+                if (self.ageM() !== 0)
+                    if (y > 4) {
+                        self.ageW(0);
+                        self.ageWValid(false);
+                        return false;
+                    }
+                if (self.ageY() !== 0)
+                    if (y > 51) {
+                        self.ageW(0);
+                        self.ageWValid(false);
+                        return false;
+                    }
+                if (y > 156) {
+                    self.ageW(0);
+                    self.ageWValid(false);
+                    return false;
+                }
+                self.ageW(y);
+                self.ageMValid(true);
+                return true;
+            }
+        });
+        self.ageD = ko.observable();
+        self.ageDValid = ko.observable();
+        self.ageDSet = ko.computed(function() {
+            var trimmed2 = ('' + self.ageDays()).trim();
+            var trimmed = trimmed2.replace(/[^0-9]/g, '');
+            if ((trimmed === '') || (trimmed !== trimmed2)) {
+                self.ageD(0);
+                self.ageDValid(true);
+                return false;
+            } else {
+                var y = Math.floor(trimmed);
+                if ((self.ageW() !== 0) && (y > 6)) {
+                    self.ageD(0);
+                    self.ageDValid(false);
+                    return false;
+                }
+                if ((self.ageM() !== 0) && (y > 31)) {
+                    self.ageD(0);
+                    self.ageDValid(false);
+                    return false;
+                }
+                if (self.ageD() > 366) {
+                    self.ageD(0);
+                    self.ageDValid(false);
+                    return false;
+                }
+                self.ageD(y);
+                self.ageDValid(true);
+                return true;
+            }
+        });
+        self.ageValid = ko.computed(function() {
+            return self.ageYValid() && self.ageMValid() && self.ageWValid() && self.ageDValid();
+        });
+        self.ageSet = ko.computed(function() {
+            return self.ageValid() && (self.ageYSet() || self.ageMSet() || self.ageWSet() || self.ageDSet());
+        });
+
 
         self.onDate1Year = ko.observable('');
         self.onDate1Month = ko.observable('');
@@ -33,8 +157,8 @@ var M$ = (function(my) {
 
         self.onDate1YMin = ko.observable();
         self.onDate1YMax = ko.observable();
-        
-        
+
+
         self.onDate1MMin = ko.observable();
         self.onDate1MMax = ko.observable();
         self.onDate1MValid = ko.observable(true);
@@ -48,7 +172,7 @@ var M$ = (function(my) {
                 return false;
             } else {
                 var y = Math.floor(trimmed);
-                    console.log('year2: '+y);
+                console.log('year2: ' + y);
                 if ((y > 2100) || (y <= 1752)) {
                     self.onDate1YMin(1752);
                     self.onDate1YMax(2100);
@@ -56,12 +180,14 @@ var M$ = (function(my) {
                 } else {
                     self.onDate1YMin(y);
                     self.onDate1YMax(y);
-                    console.log('year: '+y);
+                    console.log('year: ' + y);
                     return true;
                 }
             }
         });
-        self.onDate1YValid = ko.computed(function(){return self.onDate1YSet(); });
+        self.onDate1YValid = ko.computed(function() {
+            return self.onDate1YSet();
+        });
         self.onDate1YSetReadout = ko.computed(function() {
             return self.onDate1YSet() ? 'Set!' : 'Unset.';
         });
@@ -152,13 +278,15 @@ var M$ = (function(my) {
             self.onDate1DMax(dd);
             return true;
         });
-        self.onDate1Min = ko.computed(function(){
-            return new Date(self.onDate1YMin(), self.onDate1MMin()-1, self.onDate1DMin());
+        self.onDate1Min = ko.computed(function() {
+            return new Date(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin());
         });
-        self.onDate1Max = ko.computed(function(){
-            return new Date(self.onDate1YMax(), self.onDate1MMax()-1, self.onDate1DMax(), 23, 59, 59, 999);
+        self.onDate1Max = ko.computed(function() {
+            return new Date(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999);
         });
-        self.onDate1Valid = ko.computed(function(){ return self.onDate1YValid(); });
+        self.onDate1Valid = ko.computed(function() {
+            return self.onDate1YValid();
+        });
 
         self.onEarliestDate = ko.computed({
             read: function() {
@@ -170,9 +298,63 @@ var M$ = (function(my) {
                 return self.onDate1Valid() ? self.onDate1Max().toString() : 'Invalid';
             }
         });
-        self.birthdate = ko.computed({
+        self.earliestBirthDate = ko.computed({
             read: function() {
-                return self.onDate1YMin() - self.ageYears();
+                // do it this way round so that we know whether the day-of-month exists in the month
+                // that we're trying to set, when we set the month.
+                var d = new Date(self.onDate1Min());
+                if (self.ageDSet())
+                    d = new Date(d.setDate(d.getDate() - self.ageD() - 1));
+                offset = (self.ageDSet()) ? 0 : 1;
+                if (self.ageWSet())
+                    d = new Date(d.setDate(d.getDate() - (self.ageW() + offset) * 7));
+                offset = (self.ageWSet() || self.ageDSet()) ? 0 : 1;
+                if (self.ageMSet())
+                    d = new Date(d.setMonth(d.getMonth() - self.ageM() - offset));
+                var offset = (self.ageMSet() || self.ageWSet() || self.ageDSet()) ? 0 : 1;
+                if (self.ageYSet())
+                    d = new Date(d.setFullYear(d.getFullYear() - self.ageY() - offset));
+                if (self.ageSet())
+                    d = new Date(d.setDate(d.getDate() + 1));
+                return d;
+            }
+        });
+        self.latestBirthDate = ko.computed({
+            read: function() {
+                // do it this way round so that we know whether the day-of-month exists in the month
+                // that we're trying to set, when we set the month.
+                var d = new Date(self.onDate1Max());
+                if (self.ageDSet())
+                    d = new Date(d.setDate(d.getDate() - self.ageD()));
+                if (self.ageWSet())
+                    d = new Date(d.setDate(d.getDate() - self.ageW() * 7));
+                if (self.ageMSet()) {
+                    // This copes with strange javascript setMonth
+                    // If the date is Jul 31 and I set the month to Jun
+                    // the the date comes out Jul 1 instead of Jun 30
+                    // which is not what we want for birthdays
+                    var monthSoFar = d.getMonth(); // 0..11
+                    var targetMonth = (monthSoFar + 72 - self.ageM()) % 12; // max months is 60, this is always +ve
+                    // how to compute days in month when do not know year?
+                    var daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // jan is month 0
+                    var daysInTargetMonth = daysInMonths[targetMonth];
+                    if (d.getDate() > daysInTargetMonth)
+                        d.setDate(daysInTargetMonth);
+                    d = new Date(d.setMonth(d.getMonth() - self.ageM()));
+                }
+                if (self.ageYSet())
+                    d = new Date(d.setFullYear(d.getFullYear() - self.ageY()));
+                return d;
+            }
+        });
+        self.earliestBirthDateString = ko.computed({
+            read: function() {
+                return self.earliestBirthDate();
+            }
+        });
+        self.latestBirthDateString = ko.computed({
+            read: function() {
+                return self.latestBirthDate().toString();
             }
         });
     };

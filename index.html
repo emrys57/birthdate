@@ -17,10 +17,16 @@ and open the template in the editor.
         <div class="parmTitle">
             Age:
         </div>
-        <input type="text" data-bind="value: ageYears"/>
-        <input type="text" data-bind="value: ageMonths"/>
-        <input type="text" data-bind="value: ageWeeks"/>
-        <input type="text" data-bind="value: ageDays"/><br />
+        <input type="text" data-bind="value: ageYears, valueUpdate: 'afterkeydown', css: { invalid: !ageYValid() }"/>
+        <input type="text" data-bind="value: ageMonths, valueUpdate: 'afterkeydown', css: { invalid: !ageMValid() }"/>
+        <input type="text" data-bind="value: ageWeeks, valueUpdate: 'afterkeydown', css: { invalid: !ageWValid() }"/>
+        <input type="text" data-bind="value: ageDays, valueUpdate: 'afterkeydown', css: { invalid: !ageDValid() }"/><br />
+                <div class="parmTitle"> Age: </div>
+                <div class="ib column" data-bind="text: ageY"></div>
+                <div class="ib column" data-bind="text: ageM"></div>
+                <div class="ib column" data-bind="text: ageW"></div>
+                <div class="ib column" data-bind="text: ageD"></div>
+                <br />
         <div class="parmTitle">
             On date:
         </div>
@@ -29,16 +35,16 @@ and open the template in the editor.
         <input type="text" data-bind="{value: onDate1Day, valueUpdate: 'afterkeydown', css: { invalid: !onDate1DValid()}}">
         <br />
         <div class="parmTitle">onDate1YSet:</div> 
-        <div class="ib" data-bind="text: onDate1YSetReadout"></div>
+        <div class="ib column" data-bind="text: onDate1YSetReadout"></div>
         <br />
         <div class="parmTitle">onDate1Min:</div>
-        <div class="ib" data-bind="text: onDate1YMin"></div>
-        <div class="ib" data-bind="text: onDate1MMin"></div>
-        <div class="ib" data-bind="text: onDate1DMin"></div>
+        <div class="ib column" data-bind="text: onDate1YMin"></div>
+        <div class="ib column" data-bind="text: onDate1MMin"></div>
+        <div class="ib column" data-bind="text: onDate1DMin"></div>
         <br /><div class="parmTitle">onDate1Max:</div>
-        <div class="ib" data-bind="text: onDate1YMax"></div>
-        <div class="ib" data-bind="text: onDate1MMax"></div>
-        <div class="ib" data-bind="text: onDate1DMax"></div>
+        <div class="ib column" data-bind="text: onDate1YMax"></div>
+        <div class="ib column" data-bind="text: onDate1MMax"></div>
+        <div class="ib column" data-bind="text: onDate1DMax"></div>
         <br />
         <div class="parmTitle">
             Earliest:
@@ -51,9 +57,15 @@ and open the template in the editor.
         <div class="ib" data-bind="text: onLatestDate"></div>
         <br />
         <div class="parmTitle">
-            Birthdate:
+            Earliest Birth:
         </div>
-        <input type="text" data-bind="value: birthdate">
+        <div class="ib" data-bind="text: earliestBirthDateString"></div>
+        <br />
+        <div class="parmTitle">
+            Latest Birth:
+        </div>
+        <div class="ib" data-bind="text: latestBirthDateString"></div>
+        <br />
 
     </body>
 </html>
