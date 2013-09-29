@@ -328,6 +328,8 @@ var M$ = (function(my) {
                     d = new Date(d.setDate(d.getDate() - self.ageD()));
                 if (self.ageWSet())
                     d = new Date(d.setDate(d.getDate() - self.ageW() * 7));
+                if (self.ageYSet()) // have to do this before month is set or leap year fails
+                    d = new Date(d.setFullYear(d.getFullYear() - self.ageY()));
                 if (self.ageMSet()) {
                     // This copes with strange javascript setMonth
                     // If the date is Jul 31 and I set the month to Jun
@@ -336,14 +338,24 @@ var M$ = (function(my) {
                     var monthSoFar = d.getMonth(); // 0..11
                     var targetMonth = (monthSoFar + 72 - self.ageM()) % 12; // max months is 60, this is always +ve
                     // how to compute days in month when do not know year?
+                    // make an approximation to find the year first, then do it properly
                     var daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // jan is month 0
+                    var e = new Date(d);
+                    console.log("e: "+e);
+                    e = new Date(e.setMonth(e.getMonth() - self.ageM()));
+                    console.log('target year'+e.getFullYear());
+                    if (isLeapYear(e.getFullYear()))
+                        daysInMonths[1] = 29; // february
+                    // do it properly
                     var daysInTargetMonth = daysInMonths[targetMonth];
-                    if (d.getDate() > daysInTargetMonth)
+                    if (d.getDate() > daysInTargetMonth) {
                         d.setDate(daysInTargetMonth);
+                        console.log("Setting date to "+daysInTargetMonth);
+                    }
+                    console.log('Setting month to'+(d.getMonth() - self.ageM())+': '+d.getMonth()+': '+self.ageM());
                     d = new Date(d.setMonth(d.getMonth() - self.ageM()));
+                    console.log('date d is now'+d);
                 }
-                if (self.ageYSet())
-                    d = new Date(d.setFullYear(d.getFullYear() - self.ageY()));
                 return d;
             }
         });
