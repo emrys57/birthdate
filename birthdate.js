@@ -40,6 +40,7 @@ var M$ = (function(my) {
                 return false;
             return true;
         }
+        self.showModel = ko.observable(false);
         self.ageYears = ko.observable();
         self.ageMonths = ko.observable();
         self.ageWeeks = ko.observable();
@@ -323,6 +324,8 @@ var M$ = (function(my) {
             read: function() {
                 // do it this way round so that we know whether the day-of-month exists in the month
                 // that we're trying to set, when we set the month.
+                
+                // THIS SEEMS TO BE RUBBISH. Date is wrong when both months and either weeeks or days is set.
                 var d = new Date(self.onDate1Min());
                 if (self.ageDSet())
                     d = new Date(d.setDate(d.getDate() - self.ageD() - 1));
@@ -379,6 +382,9 @@ var M$ = (function(my) {
                 }
                 return d;
             }
+        });
+        self.birthdateInvalid = ko.computed(function(){
+            return !self.onDate1Valid() || (self.latestBirthDate().getTime() < self.earliestBirthDate().getTime());
         });
         self.earliestBirthDateString = ko.computed({
             read: function() {
