@@ -4,12 +4,28 @@
 // That means that the age could be anything from 4 years and 0ms to 5years minus 1ms.
 // "She's 10 weeks now." That means 10 weeks and 0ms to 11 weeks less 1ms.
 // "He's 3 weeks and 2 days" means 23 days and 0ms to 24 days less 1ms.
+// if the days are specified, as well as months or years, it is possible to have an impossible birthdate.
+// If someone is one month and 1 day old on march 31, when were they born?
+// one month and one day before March 31 is Feb 30, which never exists. If they were born on Feb 28, they are 1 month and 3 days old.
+// If they were born on March 1, they are 30 days old.
+// They cannot be 1 month and 1 day old.
+// If someone is 1 year 0 days old on feb 29 2004, they must have been born feb 29 2003, which is impossible.
+
+var jQuery;
 var $ = (function(my) {
     return my;
 }(jQuery || {}));
 var ko = (function(my) {
     return my;
 }(ko || {}));
+
+function dayFromDate(when, chars) {
+            if (typeof chars == 'undefined')
+                chars = 3;
+            var days= ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+            return days[when.getDay()].substr(0, chars);
+        }
+        
 var M$ = (function(my) {
 
     my.viewModel = function() {
@@ -238,8 +254,6 @@ var M$ = (function(my) {
             self.onDate1MMax(md);
             return true;
         });
-        self.onDate1Min = ko.observable();
-        self.onDate1Max = ko.observable();
         self.onDate1DMin = ko.observable();
         self.onDate1DMax = ko.observable();
         self.onDate1DValid = ko.observable(true);
@@ -278,11 +292,18 @@ var M$ = (function(my) {
             self.onDate1DMax(dd);
             return true;
         });
+        
         self.onDate1Min = ko.computed(function() {
             return new Date(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin());
         });
         self.onDate1Max = ko.computed(function() {
             return new Date(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999);
+        });
+        self.onDate1DayMin = ko.computed(function(){
+            return dayFromDate(self.onDate1Min());
+        });
+        self.onDate1DayMax = ko.computed(function(){
+            return dayFromDate(self.onDate1Max());
         });
         self.onDate1Valid = ko.computed(function() {
             return self.onDate1YValid();

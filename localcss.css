@@ -10,9 +10,13 @@ root {
     display: block;
 }
 
+body {
+    font-family: Helvetica, "Nimbus Sans L", "Liberation Sans", Arial, sans-serif;
+    line-height: 1.5em;
+}
 .parmTitle {
     display: inline-block;
-    width: 100px;
+    width: 12em;
 }
 
 .invalid {
@@ -25,5 +29,9 @@ root {
 
 .column {
     display: inline-block;
-    width: 130px;
+    width: 6em;
+}
+
+.columnInput {
+    width: 5em;
 }
