@@ -14,7 +14,7 @@ and open the template in the editor.
     </head>
     <body>
         <div class="mainDisplay">
-        <h1>Birthdate and Age Calculator</h1>
+            <h1>Birthdate and Age Calculator</h1>
         </div>
         <div class="mainDisplay">
             <div class="parmTitle"></div>
@@ -105,6 +105,18 @@ and open the template in the editor.
             <div class="ib column" data-bind="text: '23:59'"></div>
             <br />
         </div>
+        <div class="mainDisplay" >
+            <div data-bind="with: units">
+                <div data-bind="template: 'units'"></div>
+            </div>
+            <div data-bind="with: diff">
+                <div data-bind="template: 'diff'"></div>
+            </div>
+            <div data-bind="foreach: dates">
+                <div data-bind="template: 'oneDate'">
+                </div>
+            </div>
+        </div>
         <div class="development">
             <div class="developmentBox" id="developmentBox" style="">
                 <div style="">Development Only</div>
@@ -113,5 +125,27 @@ and open the template in the editor.
             </div>
             <div data-bind="if: showModel"><pre data-bind="{text: ko.toJSON($data, null, 2)}"></pre></div>
         </div>
+        <script type="text/html" id="oneDate">
+            <div class="parmTitle" data-bind="html: name"></div>
+            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: y, valueUpdate: 'afterkeydown'"/></div>
+            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: m, valueUpdate: 'afterkeydown'"/></div>
+            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: d, valueUpdate: 'afterkeydown'"/></div>
+            <div class="redAlert" data-bind="if: !valid()">Invalid!</div>
+            <div class="redAlert" data-bind="text: problems"></div>
+        </script>
+        <script type="text/html" id ="units">
+            <div class="parmTitle" data-bind="html: name"></div>
+            <div class="ib column" ><input type="checkbox" data-bind="checked: y"/>years</div>
+            <div class="ib column" ><input type="checkbox" data-bind="checked: m"/>months</div>
+            <div class="ib column" ><input type="checkbox" data-bind="checked: w"/>weeks</div>
+            <div class="ib column" ><input type="checkbox" data-bind="checked: d"/>days</div>
+        </script>
+        <script type="text/html" id ="diff">
+            <div class="parmTitle" data-bind="html: name"></div>
+            <div class="ib column" data-bind="text: d().y"></div>
+            <div class="ib column" data-bind="text: d().m"></div>
+            <div class="ib column" data-bind="text: d().w"></div>
+            <div class="ib column" data-bind="text: d().d"></div>
+        </script>
     </body>
 </html>

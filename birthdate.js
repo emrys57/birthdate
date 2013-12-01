@@ -20,12 +20,12 @@ var ko = (function(my) {
 }(ko || {}));
 
 function dayFromDate(when, chars) {
-            if (typeof chars == 'undefined')
-                chars = 3;
-            var days= ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
-            return days[when.getDay()].substr(0, chars);
-        }
-        
+    if (typeof chars == 'undefined')
+        chars = 3;
+    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+    return days[when.getDay()].substr(0, chars);
+}
+
 var M$ = (function(my) {
 
     my.viewModel = function() {
@@ -293,17 +293,17 @@ var M$ = (function(my) {
             self.onDate1DMax(dd);
             return true;
         });
-        
+
         self.onDate1Min = ko.computed(function() {
             return new Date(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin());
         });
         self.onDate1Max = ko.computed(function() {
             return new Date(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999);
         });
-        self.onDate1DayMin = ko.computed(function(){
+        self.onDate1DayMin = ko.computed(function() {
             return dayFromDate(self.onDate1Min());
         });
-        self.onDate1DayMax = ko.computed(function(){
+        self.onDate1DayMax = ko.computed(function() {
             return dayFromDate(self.onDate1Max());
         });
         self.onDate1Valid = ko.computed(function() {
@@ -320,11 +320,156 @@ var M$ = (function(my) {
                 return self.onDate1Valid() ? self.onDate1Max().toString() : 'Invalid';
             }
         });
+        function setVars(d) { // put some simple variables Math.flooro a date object so we can change them easily without date trying to second-guess us
+            d.y = d.getUTCFullYear();
+            d.m = d.getUTCMonth();
+            d.w = 0; // there isn't a week function :-)
+            d.d = d.getUTCDate();
+        }
+        // compute an object that gives the calendar distance in time between early date ed and later date ld.
+        // The result is given in terms of {y, m, w, d}
+        // but the unts can be specified by units {y, m, w, d}
+        // the options being {d} {w d}, {m w d} {y m w d} {y d} {y w d} {m d} {y m d} - actually, anything as long as it includes d!
+        // calendarDistance between 2003-2-28 and 2004-3-29 is {1, 1, 0, 1}
+        function calendarDistance(ed, ld, units2) {
+            var units = {y: ko.unwrap(units2.y), m: ko.unwrap(units2.m), w: ko.unwrap(units2.w), d: ko.unwrap(units2.d)};
+            ed.setUTCHours(0, 0, 0, 0); // make sure ed is at midnight of this day, whatever the time in the date is, UTC
+            ld.setUTCHours(0, 0, 0, 0); // make sure ld is at midnight, ditto
+            ld.setHours(5); // move ld forward to 1am to avoid any issue with leap seconds
+            setVars(ed);
+            setVars(ld);
+            var dy = 0;
+            var dm = 0;
+            var dw = 0;
+            var dd = 0;
+            if (units.y) { // want year readout
+                dy = ld.y - ed.y;
+                ed.y = ld.y; // so the date represented by ed.{ymwd) may not be real now
+            }
+            if (units.m) { // want month readout
+                dm = ld.m - ed.m; // so if we want years, we count 1 year 6 months, but if we don't want years, we count 18 months
+                if (dm < 0) { // say, ed is 2003/11 and ld is 2004/3
+                    dm += 12;
+                    dy--; // can only happen if dy has been computed
+                }
+                if (!units.y)
+                dm += (ld.y - ed.y) * 12;
+                ed.m = ld.m; // so the date represented by ed.{ymwd) may not be real now
+            }
+            if (units.d) {
+                if (units.m) {
+                    dd = ld.d - ed.d;
+                    if (dd < 0) { // say, ld is 2004-3-13 and ed is 2004-2-22
+                        // Done like this because we naturally work back from later date, then move forward a month, then count back in days.
+                        var ad = new Date(ed);
+                        ad.setUTCDate(1); // ad is 00:00 on the day the month started
+                        var bd = new Date(ed.setUTCMonth(ed.getUTCMonth() + 1)); // 00:00 on the day the next month starts
+                        bd = new Date(bd.setHour(1)); // 1am to avoid any leap second issue
+                        var daysInMonth = Math.floor((bd.getTime() - ad.getTime()) / 86400000);
+                        dd += daysInMonth;
+                        dm--;
+                    }
+                } else if (units.y) {
+                    var ad = new Date(Date.UTC(ed.getUTCFullYear(), ld.getUTCMonth(), ld.getUTCDate(), 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
+                    dd = Math.floor((ad.getTime() - ed.getTime()) / 86400000);
+//                    console.log('dd: ', dd, ad, ed);
+                    if (dd < 0) {
+                        dy--;
+                        ad = new Date(Date.UTC(ed.getUTCFullYear() + 1, ld.getUTCMonth(), ld.getUTCDate(), 0, 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
+                        dd = Math.floor((ad.getTime() - ed.getTime()) / 86400000);
+                    }
+                } else {
+                    dd = Math.floor((ld.getTime() - ed.getTime()) / 86400000);
+                }
+
+            }
+            if (units.w) { // just convert the day difference to weeks and days
+                dw = Math.floor(dd / 7);
+                dd = dd - dw * 7;
+            }
+            
+            return {y: dy, m: dm, w: dw, d: dd};
+        }
+
+        function isPositiveInteger(s) {
+            if (s == '')
+                return false;
+            var t = s.replace(/[0-9]/g, ''); // delete all digits
+            if (t != '')
+                return false;
+            return true;
+        }
+        function EUnits(name) {
+            var model = this;
+            model.name = name;
+            model.y = ko.observable(false);
+            model.m = ko.observable(false);
+            model.w = ko.observable(false);
+            model.d = ko.observable(true);
+        }
+        function EDiff(name, ed, ld, units) {
+            var model = this;
+            model.name = name;
+            model.d = ko.computed(function(){
+                var a = calendarDistance(ed.date(), ld.date(), units);
+//                console.log("EDiff1: ", units.y(), units.m(), units.w(), units.d());
+//                console.log("EDiff2: ", a.y, a.m, a.w, a.d);
+                return a;
+            });
+        }
+        function EDate(name) {
+            var model = this;
+            model.name = name;
+            model.y = ko.observable('');
+            model.m = ko.observable('');
+            model.d = ko.observable('');
+            model.date = ko.observable(new Date());
+            model.problems = ko.observable();
+            model.valid = ko.computed(function() {
+                model.problems('');
+                if (!isPositiveInteger(model.y()) || !isPositiveInteger(model.m()) || !isPositiveInteger(model.d())) {
+                    model.problems('integer');
+                    return false;
+                }
+                if (model.y() <= 1752) { // Julian calendar, cannot cope!
+                    model.problems('julian');
+                    return false;
+                }
+                if ((model.m() < 1) || (model.m() > 12)) {
+                    model.problems('month');
+                    return false;
+                }
+                if ((model.d() < 1) || (model.d() > 31)) {
+                    model.problems('day');
+                    return false;
+                }
+                var ad = new Date(Date.UTC(model.y(), model.m() - 1, model.d(), 0, 0, 0, 0)); // is that UTC?
+                model.date(ad);
+                if (ad.getUTCFullYear() != model.y()) {
+                    model.problems('y '+ad.toUTCString());
+                    return false;
+                }
+                if (ad.getUTCMonth() != model.m() - 1) {
+                    model.problems('m '+ad.toUTCString());
+                    return false;
+                }
+                if (ad.getUTCDate() != model.d()) {
+                    model.problems('d '+ad.toUTCString());
+                    return false;
+                }
+                return true;
+            });
+        }
+        self.units = new EUnits('Units');
+        self.dates = ko.observableArray();
+        self.dates.push(new EDate('earlier'));
+        self.dates.push(new EDate('later'));
+        self.diff = new EDiff('Difference', self.dates()[0], self.dates()[1], self.units);
         self.earliestBirthDate = ko.computed({
             read: function() {
                 // do it this way round so that we know whether the day-of-month exists in the month
                 // that we're trying to set, when we set the month.
-                
+
                 // THIS SEEMS TO BE RUBBISH. Date is wrong when both months and either weeeks or days is set.
                 var d = new Date(self.onDate1Min());
                 if (self.ageDSet())
@@ -365,25 +510,25 @@ var M$ = (function(my) {
                     // make an approximation to find the year first, then do it properly
                     var daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // jan is month 0
                     var e = new Date(d);
-                    console.log("e: "+e);
+                    console.log("e: " + e);
                     e = new Date(e.setMonth(e.getMonth() - self.ageM()));
-                    console.log('target year'+e.getFullYear());
+                    console.log('target year' + e.getFullYear());
                     if (isLeapYear(e.getFullYear()))
                         daysInMonths[1] = 29; // february
                     // do it properly
                     var daysInTargetMonth = daysInMonths[targetMonth];
                     if (d.getDate() > daysInTargetMonth) {
                         d.setDate(daysInTargetMonth);
-                        console.log("Setting date to "+daysInTargetMonth);
+                        console.log("Setting date to " + daysInTargetMonth);
                     }
-                    console.log('Setting month to'+(d.getMonth() - self.ageM())+': '+d.getMonth()+': '+self.ageM());
+                    console.log('Setting month to' + (d.getMonth() - self.ageM()) + ': ' + d.getMonth() + ': ' + self.ageM());
                     d = new Date(d.setMonth(d.getMonth() - self.ageM()));
-                    console.log('date d is now'+d);
+                    console.log('date d is now' + d);
                 }
                 return d;
             }
         });
-        self.birthdateInvalid = ko.computed(function(){
+        self.birthdateInvalid = ko.computed(function() {
             return !self.onDate1Valid() || (self.latestBirthDate().getTime() < self.earliestBirthDate().getTime());
         });
         self.earliestBirthDateString = ko.computed({
