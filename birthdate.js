@@ -478,6 +478,7 @@ var M$ = (function(my) {
         self.dates.push(new EDate('earlier'));
         self.dates.push(new EDate('later'));
         self.diff = new EDiff('Difference', self.dates()[0], self.dates()[1], self.units);
+        self.earliestBirthdateImpossible = ko.observable(false);
         self.earliestBirthDate = ko.computed({
             read: function() {
                 // do it this way round so that we know whether the day-of-month exists in the month
@@ -498,7 +499,54 @@ var M$ = (function(my) {
                     d = new Date(d.setFullYear(d.getFullYear() - self.ageY() - offset));
                 if (self.ageSet())
                     d = new Date(d.setDate(d.getDate() + 1));
-                return d;
+
+                var units = {y: self.ageYSet(), m: self.ageMSet(), w: self.ageWSet(), d: true}; // can only ever have d true
+                d = new Date(d.setDate(d.getDate() + 10)); // definitely forward of the actual date.
+                if (d.getTime() > self.onDate1Min().getTime()) // have birth later than earliest, cannot happen!
+                    d = new Date(self.onDate1Min());
+                // compare diff with required age
+                var earliestAcceptableDate = null;
+                var e = new Date(d);
+                if (!self.ageYSet() && !self.ageMSet() && !self.ageWSet() && !self.ageDSet())
+                    return e;
+                for (; ; ) {
+                    var diff = calendarDistance(d, self.onDate1Min(), units); // distance in required units, with mandatory days
+                    var moveBack = false;
+                    var overshot = false;
+                    if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too small, move birthdate backwards
+                        moveBack = true;
+                    } else if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too large, we have overshot
+                        overshot = true;
+                    } else  // years, either way, are acceptable
+                    if ((self.ageMSet()) && (diff.m < self.ageM())) { // month difference is too small, move birthdate backwards
+                        moveBack = true;
+                    } else if ((self.ageMSet()) && (diff.m > self.ageM())) { // month difference is too large
+                        overshot = true;
+                    } else if ((self.ageWSet()) && (diff.w < self.ageW())) { // week difference is too small, move birthdate backwards
+                        moveBack = true;
+                    } else if ((self.ageWSet()) && (diff.w > self.ageW())) { // week difference is too large
+                        overshot = true;
+                    } else if ((self.ageDSet()) && (diff.d < self.ageD())) { // day difference is too small, move birthdate backwards
+                        moveBack = true;
+                    } else if ((self.ageDSet()) && (diff.d > self.ageD())) { // day difference is too large
+                        overshot = true;
+                    }
+                    if (!moveBack && !overshot) {
+                        earliestAcceptableDate = new Date(d);
+                        console.log('acceptable:', d.toUTCString());
+                    }
+                    if (overshot) {
+                        console.log('overshot:', d.toUTCString());
+                        break;
+                    }
+                    d = new Date(d.setDate(d.getDate() - 1));
+                    console.log('moving back to ', d.toUTCString());
+                }
+                self.earliestBirthdateImpossible(!earliestAcceptableDate);
+                if (self.earliestBirthdateImpossible())
+                    return e;
+                console.log('earliestAcceptableDate', earliestAcceptableDate.toUTCString());
+                return earliestAcceptableDate;
             }
         });
         self.latestBirthDate = ko.computed({

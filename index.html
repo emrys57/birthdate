@@ -97,6 +97,7 @@ and open the template in the editor.
             <div class="ib column" data-bind="text: earliestBirthDate().getDate()"></div>
             <div class="ib column" data-bind="text: dayFromDate(earliestBirthDate())"></div>
             <div class="ib column" data-bind="text: '00:00'"></div>
+            <div class="redAlert" data-bind="if: earliestBirthdateImpossible">Impossible!!</div>
             <br /><div class="parmTitle">Birth Latest:</div>
             <div class="ib column" data-bind="text: latestBirthDate().getFullYear()"></div>
             <div class="ib column" data-bind="text: latestBirthDate().getMonth()+1"></div>
