@@ -369,21 +369,32 @@ var M$ = (function(my) {
                         var bd = new Date(bd.setUTCMonth(bd.getUTCMonth() + 1)); // 00:00 on the day the next month starts
                         bd = new Date(bd.setUTCHours(5)); // 1am to avoid any leap second issue
                         var daysInMonth = Math.floor((bd.getTime() - ad.getTime()) / 86400000);
+                        console.log('calendarDistance: adding:', daysInMonth, 'at date', ed.toUTCString());
                         dd += daysInMonth;
                         dm--;
                         if (dm < 0) {
                             dm += 12;
                             dy--;
                         }
-                    }
+                    } else
+                        console.log('calendarDistance: dd >= 0:', ld.d, ed.d);
                 } else if (units.y) {
                     var ad = new Date(Date.UTC(ed.getUTCFullYear(), ld.getUTCMonth(), ld.getUTCDate(), 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
+                    // but that is not what we want!
+                    // that then computes that 1903-3-1 is 1 year and 0 days from 1904-2-29 :-(
+                    // and you'd think that would be easy to fix
+                    // but it does not seem to be :-(
+                    
                     dd = Math.floor((ad.getTime() - ed.getTime()) / 86400000);
-//                    console.log('dd: ', dd, ad, ed);
+                    
+                    console.log('dd: ', dd, ad, ed);
                     if (dd < 0) {
                         dy--;
                         ad = new Date(Date.UTC(ed.getUTCFullYear() + 1, ld.getUTCMonth(), ld.getUTCDate(), 0, 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
+                        
                         dd = Math.floor((ad.getTime() - ed.getTime()) / 86400000);
+                        
+                    
                     }
                 } else {
                     dd = Math.floor((ld.getTime() - ed.getTime()) / 86400000);
@@ -511,11 +522,12 @@ var M$ = (function(my) {
                     return e;
                 for (; ; ) {
                     var diff = calendarDistance(d, self.onDate1Min(), units); // distance in required units, with mandatory days
+                    console.log('diff:', (self.ageYSet()?diff.y:' ')+','+(self.ageMSet()?diff.m:' ')+','+(self.ageWSet()?diff.w:' ')+','+diff.d);
                     var moveBack = false;
                     var overshot = false;
                     if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too small, move birthdate backwards
                         moveBack = true;
-                    } else if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too large, we have overshot
+                    } else if ((self.ageYSet()) && (diff.y > self.ageY())) { // years difference is too large, we have overshot
                         overshot = true;
                     } else  // years, either way, are acceptable
                     if ((self.ageMSet()) && (diff.m < self.ageM())) { // month difference is too small, move birthdate backwards
