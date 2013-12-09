@@ -342,6 +342,12 @@ var M$ = (function(my) {
             var dm = 0;
             var dw = 0;
             var dd = 0;
+            
+            var ad = null;
+            var bd = null;
+            var cd = null;
+            var fd = null;
+            var gd = null;
 
             if (units.y) { // want year readout
                 dy = ld.y - ed.y;
@@ -363,37 +369,40 @@ var M$ = (function(my) {
                     dd = ld.d - ed.d;
                     if (dd < 0) { // say, ld is 2004-3-13 and ed is 2004-2-22
                         // Done like this because we naturally work back from later date, then move forward a month, then count back in days.
-                        var ad = new Date(ed);
+                        ad = new Date(ed);
                         ad.setUTCDate(1); // ad is 00:00 on the day the month started
-                        var bd = new Date(ad);
-                        var bd = new Date(bd.setUTCMonth(bd.getUTCMonth() + 1)); // 00:00 on the day the next month starts
+                        bd = new Date(ad);
+                        bd = new Date(bd.setUTCMonth(bd.getUTCMonth() + 1)); // 00:00 on the day the next month starts
                         bd = new Date(bd.setUTCHours(5)); // 1am to avoid any leap second issue
                         var daysInMonth = Math.floor((bd.getTime() - ad.getTime()) / 86400000);
-                        console.log('calendarDistance: adding:', daysInMonth, 'at date', ed.toUTCString());
                         dd += daysInMonth;
                         dm--;
                         if (dm < 0) {
                             dm += 12;
                             dy--;
                         }
-                    } else
-                        console.log('calendarDistance: dd >= 0:', ld.d, ed.d);
+                    } else {
+                    }
                 } else if (units.y) {
-                    var ad = new Date(Date.UTC(ed.getUTCFullYear(), ld.getUTCMonth(), ld.getUTCDate(), 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
-                    // but that is not what we want!
-                    // that then computes that 1903-3-1 is 1 year and 0 days from 1904-2-29 :-(
-                    // and you'd think that would be easy to fix
-                    // but it does not seem to be :-(
+                    cd = new Date(Date.UTC(ed.getUTCFullYear(), ld.getUTCMonth(), ld.getUTCDate(), 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
                     
-                    dd = Math.floor((ad.getTime() - ed.getTime()) / 86400000);
+                    dd = Math.floor((cd.getTime() - ed.getTime()) / 86400000);
+                    // the above computation applies if ed is 2003-2-28 and ld is 2004-2-29.
+                    // the adjusted date ad is 2003-3-1
+                    // and subtracting ed from that gives dd=1, which is correct.
                     
-                    console.log('dd: ', dd, ad, ed);
-                    if (dd < 0) {
+                    // if ed is 2003-2-28 and ld is 2004-3-1, we also get dd=1, which is also correct!
+                    
+                    // But, if ed=2003-3-1 and ld=2004-2-29, we get dy = 1, dd=0, which is wrong.
+                    // That's why there is a specific check for that one condition in this next clause.
+                    // And here also, I have to adjust dd to account for the extra day that isn't otherwise counted.
+                    if ((dd < 0) || ((dd==0)&&((ld.getUTCMonth()==1)&& (ld.getUTCDate()==29) && (cd.getUTCDate() != 29)))) {
                         dy--;
-                        ad = new Date(Date.UTC(ed.getUTCFullYear() + 1, ld.getUTCMonth(), ld.getUTCDate(), 0, 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
+                        fd = new Date(Date.UTC(ed.getUTCFullYear() + 1, ld.getUTCMonth(), ld.getUTCDate(), 0, 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
                         
-                        dd = Math.floor((ad.getTime() - ed.getTime()) / 86400000);
-                        
+                        dd = Math.floor((fd.getTime() - ed.getTime()) / 86400000);
+                        if ((ld.getUTCMonth()==1)&& (ld.getUTCDate()==29) && (fd.getUTCDate() != 29))
+                        dd--;
                     
                     }
                 } else {
@@ -406,7 +415,11 @@ var M$ = (function(my) {
                 dd = dd - dw * 7;
             }
 
-            return {y: dy, m: dm, w: dw, d: dd};
+            var result = {y: dy, m: dm, w: dw, d: dd};
+            var units1 = ''+(units.y?'y':'-')+(units.m?'m':'-')+(units.w?'w':'-')+(units.d?'d':'-');
+            var result1 = ''+result.y+'-'+result.m+'-'+result.w+'-'+result.d;
+            console.log ('calendarDistance:', result1, ed.toUTCString(), ld.toUTCString(), units1, ad,bd,cd,fd,gd);
+            return result;
         }
 
         function isPositiveInteger(s) {
