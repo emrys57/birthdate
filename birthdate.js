@@ -295,10 +295,12 @@ var M$ = (function(my) {
         });
 
         self.onDate1Min = ko.computed(function() {
-            return new Date(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin());
+            var a = new Date(Date.UTC(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin()));
+//            console.log('sod1m:', self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin(), a.toUTCString());
+            return a;
         });
         self.onDate1Max = ko.computed(function() {
-            return new Date(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999);
+            return new Date(Date.UTC(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999));
         });
         self.onDate1DayMin = ko.computed(function() {
             return dayFromDate(self.onDate1Min());
@@ -510,6 +512,7 @@ var M$ = (function(my) {
 
                 // THIS SEEMS TO BE RUBBISH. Date is wrong when both months and either weeeks or days is set.
                 var d = new Date(self.onDate1Min());
+//                console.log('sebd:', 'min:'+self.onDate1Min().toUTCString());
                 if (self.ageDSet())
                     d = new Date(d.setDate(d.getDate() - self.ageD() - 1));
                 offset = (self.ageDSet()) ? 0 : 1;
@@ -535,7 +538,7 @@ var M$ = (function(my) {
                     return e;
                 for (; ; ) {
                     var diff = calendarDistance(d, self.onDate1Min(), units); // distance in required units, with mandatory days
-                    console.log('diff:', (self.ageYSet()?diff.y:' ')+','+(self.ageMSet()?diff.m:' ')+','+(self.ageWSet()?diff.w:' ')+','+diff.d);
+                    console.log('diff:', (self.ageYSet()?diff.y:' ')+','+(self.ageMSet()?diff.m:' ')+','+(self.ageWSet()?diff.w:' ')+','+diff.d, self.onDate1Min().toUTCString());
                     var moveBack = false;
                     var overshot = false;
                     if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too small, move birthdate backwards
@@ -558,14 +561,14 @@ var M$ = (function(my) {
                     }
                     if (!moveBack && !overshot) {
                         earliestAcceptableDate = new Date(d);
-                        console.log('acceptable:', d.toUTCString());
+                        console.log('acceptable:', d.toUTCString(), 'min1:'+self.onDate1Min().toUTCString());
                     }
                     if (overshot) {
-                        console.log('overshot:', d.toUTCString());
+                        console.log('overshot:', d.toUTCString(), 'min2:'+self.onDate1Min().toUTCString());
                         break;
                     }
                     d = new Date(d.setDate(d.getDate() - 1));
-                    console.log('moving back to ', d.toUTCString());
+                    console.log('moving back to ', d.toUTCString(), 'min3:'+self.onDate1Min().toUTCString());
                 }
                 self.earliestBirthdateImpossible(!earliestAcceptableDate);
                 if (self.earliestBirthdateImpossible())
