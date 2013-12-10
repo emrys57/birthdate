@@ -507,10 +507,9 @@ var M$ = (function(my) {
         self.earliestBirthdateImpossible = ko.observable(false);
         self.earliestBirthDate = ko.computed({
             read: function() {
-                // do it this way round so that we know whether the day-of-month exists in the month
-                // that we're trying to set, when we set the month.
-
-                // THIS SEEMS TO BE RUBBISH. Date is wrong when both months and either weeeks or days is set.
+                // This has proved exceptionally confusing and tricky.
+                // Every straightforward approach so far has failed.
+                // I have to make a fair guess at the date, then grope my way towards it a day at a time.
                 var d = new Date(self.onDate1Min());
 //                console.log('sebd:', 'min:'+self.onDate1Min().toUTCString());
                 if (self.ageDSet())
@@ -577,54 +576,76 @@ var M$ = (function(my) {
                 return earliestAcceptableDate;
             }
         });
+        
+        // For latest birthdate, try same approach as earliest
+        // compute a date somewhere in the region.
+        // Move back 10 days to be sure we're beofre the latest date
+        // Move forward one day at a time and pick the latest acceptable date
+        self.latestBirthdateImpossible = ko.observable(false);
         self.latestBirthDate = ko.computed({
             read: function() {
                 // do it this way round so that we know whether the day-of-month exists in the month
                 // that we're trying to set, when we set the month.
                 var d = new Date(self.onDate1Max());
                 if (self.ageDSet())
-                    d = new Date(d.setDate(d.getDate() - self.ageD()));
+                    d = new Date(d.setUTCDate(d.getUTCDate() - self.ageD()));
                 if (self.ageWSet())
-                    d = new Date(d.setDate(d.getDate() - self.ageW() * 7));
+                    d = new Date(d.setUTCDate(d.getUTCDate() - self.ageW() * 7));
                 if (self.ageYSet()) // have to do this before month is set or leap year fails
-                    d = new Date(d.setFullYear(d.getFullYear() - self.ageY()));
+                    d = new Date(d.setUTCFullYear(d.getUTCFullYear() - self.ageY()));
                 if (self.ageMSet()) {
-                    // This copes with strange javascript setMonth
-                    // If the date is Jul 31 and I set the month to Jun
-                    // the the date comes out Jul 1 instead of Jun 30
-                    // which is not what we want for birthdays
-                    var monthSoFar = d.getMonth(); // 0..11
-                    var targetMonth = (monthSoFar + 72 - self.ageM()) % 12; // max months is 60, this is always +ve
-                    // how to compute days in month when do not know year?
-                    // make an approximation to find the year first, then do it properly
-                    var daysInMonths = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // jan is month 0
-                    var e = new Date(d);
-                    console.log("e: " + e);
-                    e = new Date(e.setMonth(e.getMonth() - self.ageM()));
-                    console.log('target year' + e.getFullYear());
-                    if (isLeapYear(e.getFullYear()))
-                        daysInMonths[1] = 29; // february
-                    // do it properly
-                    var daysInTargetMonth = daysInMonths[targetMonth];
-                    if (d.getDate() > daysInTargetMonth) {
-                        d.setDate(daysInTargetMonth);
-                        console.log("Setting date to " + daysInTargetMonth);
-                    }
-                    console.log('Setting month to' + (d.getMonth() - self.ageM()) + ': ' + d.getMonth() + ': ' + self.ageM());
-                    d = new Date(d.setMonth(d.getMonth() - self.ageM()));
-                    console.log('date d is now' + d);
+                    d = new Date(d.setUTCMonth(d.getUTCMonth() -self.ageM()));
                 }
+                // d is now an approximation to the latest birthdate.
+                d = new Date(d.setUTCDate(d.getUTCDate() - 10)); // move back 10 days so we are before latest birthdate
                 var units = {y: self.ageYSet(), m: self.ageMSet(), w: self.ageWSet(), d: true};
-                var cd = calendarDistance(d, self.onDate1Max(), units);
-                if (units.y && (cd.y != self.ageY()))
-                    console.log('Wrong y', cd.y, self.ageY());
-                if (units.m && (cd.m != self.ageM()))
-                    console.log('Wrong m', cd.m, self.ageM());
-                if (units.w && (cd.w != self.ageW()))
-                    console.log('Wrong w', cd.w, self.ageW());
-                if (units.d && (cd.d != self.ageD()))
-                    console.log('Wrong d', cd.d, self.ageD());
-                return d;
+                
+                var latestAcceptableDate = null;
+                if (!self.ageYSet() && !self.ageMSet() && !self.ageWSet() && !self.ageDSet())
+                    return new Date(self.onDate1Max());
+
+                for (; ; ) {
+                    var diff = calendarDistance(d, self.onDate1Max(), units); // distance in required units, with mandatory days
+                    console.log('diff:', (self.ageYSet()?diff.y:' ')+','+(self.ageMSet()?diff.m:' ')+','+(self.ageWSet()?diff.w:' ')+','+diff.d, self.onDate1Max().toUTCString());
+                    var moveForward = false;
+                    var overshot = false;
+                    
+                    if ((self.ageYSet()) && (diff.y > self.ageY())) { // years difference is too large, move birthdate forwards
+                        moveForward = true;
+                    } else if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too small, we have overshot
+                        overshot = true;
+                    } else  // years, either way, are acceptable
+                    if ((self.ageMSet()) && (diff.m > self.ageM())) { // month difference is too large, move birthdate forwards
+                        moveForward = true;
+                    } else if ((self.ageMSet()) && (diff.m < self.ageM())) { // month difference is too small
+                        overshot = true;
+                    } else if ((self.ageWSet()) && (diff.w > self.ageW())) { // week difference is too large, move birthdate forwards
+                        moveForward = true;
+                    } else if ((self.ageWSet()) && (diff.w < self.ageW())) { // week difference is too small
+                        overshot = true;
+                    } else if ((self.ageDSet()) && (diff.d > self.ageD())) { // day difference is too large, move birthdate forwards
+                        moveForward = true;
+                    } else if ((self.ageDSet()) && (diff.d < self.ageD())) { // day difference is too small
+                        overshot = true;
+                    }
+                    
+                    if (!moveForward && !overshot) {
+                        latestAcceptableDate = new Date(d);
+                        console.log('acceptable:', d.toUTCString(), 'max1:'+self.onDate1Max().toUTCString());
+                    }
+                    if (overshot) {
+                        console.log('overshot:', d.toUTCString(), 'max2:'+self.onDate1Max().toUTCString());
+                        break;
+                    }
+                    d = new Date(d.setUTCDate(d.getUTCDate() + 1));
+                    console.log('moving forward to ', d.toUTCString(), 'max3:'+self.onDate1Max().toUTCString());
+                }
+                
+                self.latestBirthdateImpossible(!latestAcceptableDate);
+                if (self.latestBirthdateImpossible())
+                    return new Date(self.onDate1Max());
+                console.log('latestAcceptableDate', latestAcceptableDate.toUTCString());
+                return latestAcceptableDate;
             }
         });
         self.birthdateInvalid = ko.computed(function() {
