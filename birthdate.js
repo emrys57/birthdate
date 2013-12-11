@@ -356,7 +356,7 @@ var M$ = (function(my) {
                 self.onDate1Min(d);
                 self.onDate1Max(d);
             } else if (self.calculation() == 'bfbrq') { // set date to be start and end of birth reigstration interval
-                if (self.onDate1YSet()) {
+                if (self.onDate1YSet() && self.briUnit()) { // have to check briUnit, can be undefined.
                     var y = self.onDate1YMin();
                     var a = new Date(Date.UTC(y, self.briUnit().minM, 1)); // first day of first month of quarter (or month)
                     var b = new Date(Date.UTC(y, self.briUnit().maxM + 1, 1, 23, 59, 59, 999)); // first day of first month of next quarter (or month)
@@ -830,6 +830,12 @@ var M$ = (function(my) {
                     return false;
             }
             return true;
+        });
+        self.developmentWanted = ko.computed(function(){
+            var a = window.location.hostname;
+            if (a == 'localhost')
+                return true;
+            return false;
         });
     };
     return my;
