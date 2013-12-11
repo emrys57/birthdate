@@ -67,6 +67,25 @@ var M$ = (function(my) {
                 }
             }
         });
+        self.calculation = ko.observable(); // just define it here or get a problem with forward references
+        self.ageYMin = ko.computed(function(){
+            if ((self.calculation() != 'Age on UK Census Day') || (self.ukCensusYear() != '1841')) // not 1841 census
+                return self.ageY();
+            if ((self.ageY() < 15) || ((self.ageY() % 5) != 0)) // child, or gave right age anyway
+                return self.ageY();
+            // ages were rounded down to the nearest 5 years. So any age from 15..19 would state 15.
+            // so after all this...
+            return self.ageY(); // the min age in years was the stated value anyway.
+        });
+        self.ageYMax = ko.computed(function(){
+            if ((self.calculation() != 'Age on UK Census Day') || (self.ukCensusYear() != '1841'))
+                return self.ageY();
+            // All 15-year-olds gave their correct age. However, many gave 15 who were older. So the comparison is "< 15".
+            if ((self.ageY() < 15) || ((self.ageY() % 5) != 0)) // child, or gave right age anyway
+                return self.ageY();
+            // ages were rounded down to the nearest 5 years. So any age from 15..19 would state 15.
+            return self.ageY()+4; // Just adding 4 to 15 gets 19. Etc.
+        });
         self.ageM = ko.observable();
         self.ageMValid = ko.observable();
         self.ageMSet = ko.computed(function() {
@@ -508,6 +527,7 @@ var M$ = (function(my) {
         self.dates.push(new EDate('later'));
         self.diff = new EDiff('Difference', self.dates()[0], self.dates()[1], self.units);
         self.earliestBirthdateImpossible = ko.observable(false);
+        // Earliest birthdate has to be computed with ageYMax, which might be greater than ageYMin for the 1841 census.
         self.earliestBirthDate = ko.computed({
             read: function() {
                 // This has proved exceptionally confusing and tricky.
@@ -525,7 +545,7 @@ var M$ = (function(my) {
                     d = new Date(d.setMonth(d.getMonth() - self.ageM() - offset));
                 var offset = (self.ageMSet() || self.ageWSet() || self.ageDSet()) ? 0 : 1;
                 if (self.ageYSet())
-                    d = new Date(d.setFullYear(d.getFullYear() - self.ageY() - offset));
+                    d = new Date(d.setFullYear(d.getFullYear() - self.ageYMax() - offset));
                 if (self.ageSet())
                     d = new Date(d.setDate(d.getDate() + 1));
 
@@ -543,9 +563,9 @@ var M$ = (function(my) {
                     console.log('diff:', (self.ageYSet()?diff.y:' ')+','+(self.ageMSet()?diff.m:' ')+','+(self.ageWSet()?diff.w:' ')+','+diff.d, self.onDate1Min().toUTCString());
                     var moveBack = false;
                     var overshot = false;
-                    if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too small, move birthdate backwards
+                    if ((self.ageYSet()) && (diff.y < self.ageYMax())) { // years difference is too small, move birthdate backwards
                         moveBack = true;
-                    } else if ((self.ageYSet()) && (diff.y > self.ageY())) { // years difference is too large, we have overshot
+                    } else if ((self.ageYSet()) && (diff.y > self.ageYMax())) { // years difference is too large, we have overshot
                         overshot = true;
                     } else  // years, either way, are acceptable
                     if ((self.ageMSet()) && (diff.m < self.ageM())) { // month difference is too small, move birthdate backwards
@@ -585,6 +605,8 @@ var M$ = (function(my) {
         // Move back 10 days to be sure we're beofre the latest date
         // Move forward one day at a time and pick the latest acceptable date
         self.latestBirthdateImpossible = ko.observable(false);
+        
+        // latest birthdate has to be computed with ageYMin. This is at the moment always the same as ageY. But, maybe not later.
         self.latestBirthDate = ko.computed({
             read: function() {
                 // do it this way round so that we know whether the day-of-month exists in the month
@@ -595,7 +617,7 @@ var M$ = (function(my) {
                 if (self.ageWSet())
                     d = new Date(d.setUTCDate(d.getUTCDate() - self.ageW() * 7));
                 if (self.ageYSet()) // have to do this before month is set or leap year fails
-                    d = new Date(d.setUTCFullYear(d.getUTCFullYear() - self.ageY()));
+                    d = new Date(d.setUTCFullYear(d.getUTCFullYear() - self.ageYMin()));
                 if (self.ageMSet()) {
                     d = new Date(d.setUTCMonth(d.getUTCMonth() -self.ageM()));
                 }
@@ -613,9 +635,9 @@ var M$ = (function(my) {
                     var moveForward = false;
                     var overshot = false;
                     
-                    if ((self.ageYSet()) && (diff.y > self.ageY())) { // years difference is too large, move birthdate forwards
+                    if ((self.ageYSet()) && (diff.y > self.ageYMin())) { // years difference is too large, move birthdate forwards
                         moveForward = true;
-                    } else if ((self.ageYSet()) && (diff.y < self.ageY())) { // years difference is too small, we have overshot
+                    } else if ((self.ageYSet()) && (diff.y < self.ageYMin())) { // years difference is too small, we have overshot
                         overshot = true;
                     } else  // years, either way, are acceptable
                     if ((self.ageMSet()) && (diff.m > self.ageM())) { // month difference is too large, move birthdate forwards
@@ -652,6 +674,7 @@ var M$ = (function(my) {
             }
         });
         self.birthdateInvalid = ko.computed(function() {
+            return false;
             return !self.onDate1Valid() || (self.latestBirthDate().getTime() < self.earliestBirthDate().getTime());
         });
         self.earliestBirthDateString = ko.computed({
