@@ -68,8 +68,9 @@ var M$ = (function(my) {
             }
         });
         self.calculation = ko.observable(); // just define it here or get a problem with forward references
-        self.ageYMin = ko.computed(function(){
-            if ((self.calculation() != 'Age on UK Census Day') || (self.ukCensusYear() != '1841')) // not 1841 census
+        self.briUnit = ko.observable(); // this will hold a pointer to the object, not the codedValue. ditto.
+        self.ageYMin = ko.computed(function() {
+            if ((self.calculation() != 'bfaaukc') || (self.ukCensusYear() != '1841')) // not 1841 census
                 return self.ageY();
             if ((self.ageY() < 15) || ((self.ageY() % 5) != 0)) // child, or gave right age anyway
                 return self.ageY();
@@ -77,14 +78,14 @@ var M$ = (function(my) {
             // so after all this...
             return self.ageY(); // the min age in years was the stated value anyway.
         });
-        self.ageYMax = ko.computed(function(){
-            if ((self.calculation() != 'Age on UK Census Day') || (self.ukCensusYear() != '1841'))
+        self.ageYMax = ko.computed(function() {
+            if ((self.calculation() != 'bfaaukc') || (self.ukCensusYear() != '1841'))
                 return self.ageY();
             // All 15-year-olds gave their correct age. However, many gave 15 who were older. So the comparison is "< 15".
             if ((self.ageY() < 15) || ((self.ageY() % 5) != 0)) // child, or gave right age anyway
                 return self.ageY();
             // ages were rounded down to the nearest 5 years. So any age from 15..19 would state 15.
-            return self.ageY()+4; // Just adding 4 to 15 gets 19. Etc.
+            return self.ageY() + 4; // Just adding 4 to 15 gets 19. Etc.
         });
         self.ageM = ko.observable();
         self.ageMValid = ko.observable();
@@ -179,6 +180,32 @@ var M$ = (function(my) {
                 return true;
             }
         });
+        // We need separate min and max day ages for the birth registration compuation.
+        // Births may be registered up to 6 weeks after the event.
+        // So the youngest the child might be is 0 days, and the oldest is 42 days.
+        self.ageDMin = ko.computed(function() {
+            if (self.calculation() != 'bfbrq')
+                return self.ageD();
+            return 0;
+        });
+        self.ageDMax = ko.computed(function() {
+            if (self.calculation() != 'bfbrq')
+                return self.ageD();
+            return 42; // :-)
+        });
+        self.ageMMin = ko.computed(function() {
+            return self.ageM();
+        });
+        self.ageMMax = ko.computed(function() {
+            return self.ageM();
+        });
+        self.ageWMin = ko.computed(function() {
+            return self.ageW();
+        });
+        self.ageWMax = ko.computed(function() {
+            return self.ageW();
+        });
+
         self.ageValid = ko.computed(function() {
             return self.ageYValid() && self.ageMValid() && self.ageWValid() && self.ageDValid();
         });
@@ -317,10 +344,33 @@ var M$ = (function(my) {
         self.onDate1Max = ko.observable(new Date());
         self.setDate1 = ko.computed(function() {
             // done like this so can set onDate1Min in other ways too
-            var a = new Date(Date.UTC(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin()));
-            var b = new Date(Date.UTC(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999));
-            self.onDate1Min(a);
-            self.onDate1Max(b);
+            if (self.calculation() == 'bfaaukc') { // set date min and max to be day of census
+                var i = self.ukCensusYears.indexOf(self.ukCensusYear());
+                if (i < 0)
+                    return;
+                var dString = self.ukCensusDate()[i];
+                var parm = dString.split('-');
+                if (parm.length < 3)
+                    return;
+                var d = new Date(Date.UTC(parm[0], parm[1] - 1, parm[2]));
+                self.onDate1Min(d);
+                self.onDate1Max(d);
+            } else if (self.calculation() == 'bfbrq') { // set date to be start and end of birth reigstration interval
+                if (self.onDate1YSet()) {
+                    var y = self.onDate1YMin();
+                    var a = new Date(Date.UTC(y, self.briUnit().minM, 1)); // first day of first month of quarter (or month)
+                    var b = new Date(Date.UTC(y, self.briUnit().maxM + 1, 1, 23, 59, 59, 999)); // first day of first month of next quarter (or month)
+                    var c = new Date(b.setUTCDate(0)); // the last day of the last month of the quarter (or month)
+                    self.onDate1Min(a);
+                    self.onDate1Max(c);
+                    console.log('setDate1', c.toUTCString());
+                }
+            } else { // set date min and max according to set fields of onDate
+                var a = new Date(Date.UTC(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin()));
+                var b = new Date(Date.UTC(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999));
+                self.onDate1Min(a);
+                self.onDate1Max(b);
+            }
 //            console.log('setDate: min:', self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin(), a.toUTCString());
 //            console.log('setDate: max:', self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), b.toUTCString());
         });
@@ -366,7 +416,7 @@ var M$ = (function(my) {
             var dm = 0;
             var dw = 0;
             var dd = 0;
-            
+
             var ad = null;
             var bd = null;
             var cd = null;
@@ -409,25 +459,25 @@ var M$ = (function(my) {
                     }
                 } else if (units.y) {
                     cd = new Date(Date.UTC(ed.getUTCFullYear(), ld.getUTCMonth(), ld.getUTCDate(), 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
-                    
+
                     dd = Math.floor((cd.getTime() - ed.getTime()) / 86400000);
                     // the above computation applies if ed is 2003-2-28 and ld is 2004-2-29.
                     // the adjusted date ad is 2003-3-1
                     // and subtracting ed from that gives dd=1, which is correct.
-                    
+
                     // if ed is 2003-2-28 and ld is 2004-3-1, we also get dd=1, which is also correct!
-                    
+
                     // But, if ed=2003-3-1 and ld=2004-2-29, we get dy = 1, dd=0, which is wrong.
                     // That's why there is a specific check for that one condition in this next clause.
                     // And here also, I have to adjust dd to account for the extra day that isn't otherwise counted.
-                    if ((dd < 0) || ((dd==0)&&((ld.getUTCMonth()==1)&& (ld.getUTCDate()==29) && (cd.getUTCDate() != 29)))) {
+                    if ((dd < 0) || ((dd == 0) && ((ld.getUTCMonth() == 1) && (ld.getUTCDate() == 29) && (cd.getUTCDate() != 29)))) {
                         dy--;
                         fd = new Date(Date.UTC(ed.getUTCFullYear() + 1, ld.getUTCMonth(), ld.getUTCDate(), 0, 5, 0, 0)); // adjusts date if needed, 2003-2-29 becomes 2003-3-1
-                        
+
                         dd = Math.floor((fd.getTime() - ed.getTime()) / 86400000);
-                        if ((ld.getUTCMonth()==1)&& (ld.getUTCDate()==29) && (fd.getUTCDate() != 29))
-                        dd--;
-                    
+                        if ((ld.getUTCMonth() == 1) && (ld.getUTCDate() == 29) && (fd.getUTCDate() != 29))
+                            dd--;
+
                     }
                 } else {
                     dd = Math.floor((ld.getTime() - ed.getTime()) / 86400000);
@@ -440,9 +490,9 @@ var M$ = (function(my) {
             }
 
             var result = {y: dy, m: dm, w: dw, d: dd};
-            var units1 = ''+(units.y?'y':'-')+(units.m?'m':'-')+(units.w?'w':'-')+(units.d?'d':'-');
-            var result1 = ''+result.y+'-'+result.m+'-'+result.w+'-'+result.d;
-            console.log ('calendarDistance:', result1, ed.toUTCString(), ld.toUTCString(), units1, ad,bd,cd,fd,gd);
+            var units1 = '' + (units.y ? 'y' : '-') + (units.m ? 'm' : '-') + (units.w ? 'w' : '-') + (units.d ? 'd' : '-');
+            var result1 = '' + result.y + '-' + result.m + '-' + result.w + '-' + result.d;
+            console.log('calendarDistance:', result1, ed.toUTCString(), ld.toUTCString(), units1, ad, bd, cd, fd, gd);
             return result;
         }
 
@@ -526,6 +576,17 @@ var M$ = (function(my) {
         self.dates.push(new EDate('earlier'));
         self.dates.push(new EDate('later'));
         self.diff = new EDiff('Difference', self.dates()[0], self.dates()[1], self.units);
+
+        // quickly set up which date fields are defined
+        self.set2 = ko.computed(function() { // don't call this isSet()! reserved?
+            var s;
+            if (self.calculation() == 'bfbrq')
+                s = {y: false, m: false, w: false, d: true};
+            else
+                s = {y: self.ageYSet(), m: self.ageMSet(), w: self.ageWSet(), d: self.ageDSet()};
+//            console.log('set2:', s, self.calculation());
+            return s;
+        });
         self.earliestBirthdateImpossible = ko.observable(false);
         // Earliest birthdate has to be computed with ageYMax, which might be greater than ageYMin for the 1841 census.
         self.earliestBirthDate = ko.computed({
@@ -534,63 +595,64 @@ var M$ = (function(my) {
                 // Every straightforward approach so far has failed.
                 // I have to make a fair guess at the date, then grope my way towards it a day at a time.
                 var d = new Date(self.onDate1Min());
-//                console.log('sebd:', 'min:'+self.onDate1Min().toUTCString());
-                if (self.ageDSet())
-                    d = new Date(d.setDate(d.getDate() - self.ageD() - 1));
-                offset = (self.ageDSet()) ? 0 : 1;
-                if (self.ageWSet())
-                    d = new Date(d.setDate(d.getDate() - (self.ageW() + offset) * 7));
-                offset = (self.ageWSet() || self.ageDSet()) ? 0 : 1;
-                if (self.ageMSet())
-                    d = new Date(d.setMonth(d.getMonth() - self.ageM() - offset));
-                var offset = (self.ageMSet() || self.ageWSet() || self.ageDSet()) ? 0 : 1;
-                if (self.ageYSet())
+                var set = self.set2(); // which date fields are set?
+//                console.log('sebd:', 'min:' + self.onDate1Min().toUTCString(), set);
+                if (set.d)
+                    d = new Date(d.setDate(d.getDate() - self.ageDMax() - 1));
+                offset = (set.d) ? 0 : 1;
+                if (set.w)
+                    d = new Date(d.setDate(d.getDate() - (self.ageWMax() + offset) * 7));
+                offset = (set.w || set.d) ? 0 : 1;
+                if (set.m)
+                    d = new Date(d.setMonth(d.getMonth() - self.ageMMax() - offset));
+                var offset = (set.m || set.w || set.d) ? 0 : 1;
+                if (set.y)
                     d = new Date(d.setFullYear(d.getFullYear() - self.ageYMax() - offset));
                 if (self.ageSet())
                     d = new Date(d.setDate(d.getDate() + 1));
 
-                var units = {y: self.ageYSet(), m: self.ageMSet(), w: self.ageWSet(), d: true}; // can only ever have d true
+                var units = {y: set.y, m: set.m, w: set.w, d: true}; // can only ever have d true
                 d = new Date(d.setDate(d.getDate() + 10)); // definitely forward of the actual date.
                 if (d.getTime() > self.onDate1Min().getTime()) // have birth later than earliest, cannot happen!
                     d = new Date(self.onDate1Min());
                 // compare diff with required age
                 var earliestAcceptableDate = null;
                 var e = new Date(d);
-                if (!self.ageYSet() && !self.ageMSet() && !self.ageWSet() && !self.ageDSet())
+                if (!set.y && !set.m && !set.w && !set.d)
                     return e;
                 for (; ; ) {
                     var diff = calendarDistance(d, self.onDate1Min(), units); // distance in required units, with mandatory days
-                    console.log('diff:', (self.ageYSet()?diff.y:' ')+','+(self.ageMSet()?diff.m:' ')+','+(self.ageWSet()?diff.w:' ')+','+diff.d, self.onDate1Min().toUTCString());
+                    console.log('diff:', (set.y ? diff.y : ' ') + ',' + (set.m ? diff.m : ' ') + ',' + (set.w ? diff.w : ' ') + ',' + diff.d, self.onDate1Min().toUTCString());
                     var moveBack = false;
                     var overshot = false;
-                    if ((self.ageYSet()) && (diff.y < self.ageYMax())) { // years difference is too small, move birthdate backwards
+                    if ((set.y) && (diff.y < self.ageYMax())) { // years difference is too small, move birthdate backwards
                         moveBack = true;
-                    } else if ((self.ageYSet()) && (diff.y > self.ageYMax())) { // years difference is too large, we have overshot
+                    } else if ((set.y) && (diff.y > self.ageYMax())) { // years difference is too large, we have overshot
                         overshot = true;
                     } else  // years, either way, are acceptable
-                    if ((self.ageMSet()) && (diff.m < self.ageM())) { // month difference is too small, move birthdate backwards
+                    if ((set.m) && (diff.m < self.ageMMax())) { // month difference is too small, move birthdate backwards
                         moveBack = true;
-                    } else if ((self.ageMSet()) && (diff.m > self.ageM())) { // month difference is too large
+                    } else if ((set.m) && (diff.m > self.ageMMax())) { // month difference is too large
                         overshot = true;
-                    } else if ((self.ageWSet()) && (diff.w < self.ageW())) { // week difference is too small, move birthdate backwards
+                    } else if ((set.w) && (diff.w < self.ageWMax())) { // week difference is too small, move birthdate backwards
                         moveBack = true;
-                    } else if ((self.ageWSet()) && (diff.w > self.ageW())) { // week difference is too large
+                    } else if ((set.w) && (diff.w > self.ageWMax())) { // week difference is too large
                         overshot = true;
-                    } else if ((self.ageDSet()) && (diff.d < self.ageD())) { // day difference is too small, move birthdate backwards
+                    } else if ((set.d) && (diff.d < self.ageDMax())) { // day difference is too small, move birthdate backwards
                         moveBack = true;
-                    } else if ((self.ageDSet()) && (diff.d > self.ageD())) { // day difference is too large
+                    } else if ((set.d) && (diff.d > self.ageDMax())) { // day difference is too large
                         overshot = true;
                     }
                     if (!moveBack && !overshot) {
                         earliestAcceptableDate = new Date(d);
-                        console.log('acceptable:', d.toUTCString(), 'min1:'+self.onDate1Min().toUTCString());
+                        console.log('acceptable:', d.toUTCString(), 'min1:' + self.onDate1Min().toUTCString());
                     }
                     if (overshot) {
-                        console.log('overshot:', d.toUTCString(), 'min2:'+self.onDate1Min().toUTCString());
+                        console.log('overshot:', d.toUTCString(), 'min2:' + self.onDate1Min().toUTCString());
                         break;
                     }
                     d = new Date(d.setDate(d.getDate() - 1));
-                    console.log('moving back to ', d.toUTCString(), 'min3:'+self.onDate1Min().toUTCString());
+                    console.log('moving back to ', d.toUTCString(), 'min3:' + self.onDate1Min().toUTCString());
                 }
                 self.earliestBirthdateImpossible(!earliestAcceptableDate);
                 if (self.earliestBirthdateImpossible())
@@ -599,73 +661,74 @@ var M$ = (function(my) {
                 return earliestAcceptableDate;
             }
         });
-        
+
         // For latest birthdate, try same approach as earliest
         // compute a date somewhere in the region.
         // Move back 10 days to be sure we're beofre the latest date
         // Move forward one day at a time and pick the latest acceptable date
         self.latestBirthdateImpossible = ko.observable(false);
-        
+
         // latest birthdate has to be computed with ageYMin. This is at the moment always the same as ageY. But, maybe not later.
         self.latestBirthDate = ko.computed({
             read: function() {
                 // do it this way round so that we know whether the day-of-month exists in the month
                 // that we're trying to set, when we set the month.
                 var d = new Date(self.onDate1Max());
-                if (self.ageDSet())
-                    d = new Date(d.setUTCDate(d.getUTCDate() - self.ageD()));
-                if (self.ageWSet())
-                    d = new Date(d.setUTCDate(d.getUTCDate() - self.ageW() * 7));
-                if (self.ageYSet()) // have to do this before month is set or leap year fails
+                var set = self.set2(); // which date fields are set?
+                if (set.d)
+                    d = new Date(d.setUTCDate(d.getUTCDate() - self.ageDMin()));
+                if (set.w)
+                    d = new Date(d.setUTCDate(d.getUTCDate() - self.ageWMin() * 7));
+                if (set.y) // have to do this before month is set or leap year fails
                     d = new Date(d.setUTCFullYear(d.getUTCFullYear() - self.ageYMin()));
-                if (self.ageMSet()) {
-                    d = new Date(d.setUTCMonth(d.getUTCMonth() -self.ageM()));
+                if (set.m) {
+                    d = new Date(d.setUTCMonth(d.getUTCMonth() - self.ageMMin()));
                 }
                 // d is now an approximation to the latest birthdate.
                 d = new Date(d.setUTCDate(d.getUTCDate() - 10)); // move back 10 days so we are before latest birthdate
-                var units = {y: self.ageYSet(), m: self.ageMSet(), w: self.ageWSet(), d: true};
-                
+                var units = {y: set.y, m: set.m, w: set.w, d: true};
+
                 var latestAcceptableDate = null;
-                if (!self.ageYSet() && !self.ageMSet() && !self.ageWSet() && !self.ageDSet())
+                if (!set.y && !set.m && !set.w && !set.d)
                     return new Date(self.onDate1Max());
 
                 for (; ; ) {
                     var diff = calendarDistance(d, self.onDate1Max(), units); // distance in required units, with mandatory days
-                    console.log('diff:', (self.ageYSet()?diff.y:' ')+','+(self.ageMSet()?diff.m:' ')+','+(self.ageWSet()?diff.w:' ')+','+diff.d, self.onDate1Max().toUTCString());
+                    console.log('diff:', (set.y ? diff.y : ' ') + ',' + (set.m ? diff.m : ' ') + ',' + (set.w ? diff.w : ' ') + ',' + diff.d, self.onDate1Max().toUTCString());
                     var moveForward = false;
                     var overshot = false;
-                    
-                    if ((self.ageYSet()) && (diff.y > self.ageYMin())) { // years difference is too large, move birthdate forwards
+
+                    if ((set.y) && (diff.y > self.ageYMin())) { // years difference is too large, move birthdate forwards
                         moveForward = true;
-                    } else if ((self.ageYSet()) && (diff.y < self.ageYMin())) { // years difference is too small, we have overshot
+                    } else if ((set.y) && (diff.y < self.ageYMin())) { // years difference is too small, we have overshot
                         overshot = true;
                     } else  // years, either way, are acceptable
-                    if ((self.ageMSet()) && (diff.m > self.ageM())) { // month difference is too large, move birthdate forwards
+                    if ((set.m) && (diff.m > self.ageMMin())) { // month difference is too large, move birthdate forwards
                         moveForward = true;
-                    } else if ((self.ageMSet()) && (diff.m < self.ageM())) { // month difference is too small
+                    } else if ((set.m) && (diff.m < self.ageMMin())) { // month difference is too small
                         overshot = true;
-                    } else if ((self.ageWSet()) && (diff.w > self.ageW())) { // week difference is too large, move birthdate forwards
+                    } else if ((set.w) && (diff.w > self.ageWMin())) { // week difference is too large, move birthdate forwards
                         moveForward = true;
-                    } else if ((self.ageWSet()) && (diff.w < self.ageW())) { // week difference is too small
+                    } else if ((set.w) && (diff.w < self.ageWMin())) { // week difference is too small
                         overshot = true;
-                    } else if ((self.ageDSet()) && (diff.d > self.ageD())) { // day difference is too large, move birthdate forwards
+                    } else if ((set.d) && (diff.d > self.ageDMin())) { // day difference is too large, move birthdate forwards
                         moveForward = true;
-                    } else if ((self.ageDSet()) && (diff.d < self.ageD())) { // day difference is too small
+                    } else if ((set.d) && (diff.d < self.ageDMin())) { // day difference is too small
                         overshot = true;
                     }
-                    
+
                     if (!moveForward && !overshot) {
                         latestAcceptableDate = new Date(d);
-                        console.log('acceptable:', d.toUTCString(), 'max1:'+self.onDate1Max().toUTCString());
+                        console.log('acceptable:', d.toUTCString(), 'max1:' + self.onDate1Max().toUTCString());
                     }
                     if (overshot) {
-                        console.log('overshot:', d.toUTCString(), 'max2:'+self.onDate1Max().toUTCString());
+                        console.log('overshot:', d.toUTCString(), 'max2:' + self.onDate1Max().toUTCString());
                         break;
                     }
                     d = new Date(d.setUTCDate(d.getUTCDate() + 1));
-                    console.log('moving forward to ', d.toUTCString(), 'max3:'+self.onDate1Max().toUTCString());
+                    console.log('moving forward to ', d.toUTCString(), 'max3:' + self.onDate1Max().toUTCString());
                 }
-                
+
                 self.latestBirthdateImpossible(!latestAcceptableDate);
                 if (self.latestBirthdateImpossible())
                     return new Date(self.onDate1Max());
@@ -687,41 +750,62 @@ var M$ = (function(my) {
                 return self.latestBirthDate().toString();
             }
         });
-        self.calculators = ko.observableArray(['Age on Date', 'Age on UK Census Day', 'option3']);
-        self.calculation = ko.observable('');
-        self.ukCensusYears = ko.observableArray([1841, 1851, 1861, 1871, 1881, 1891, 1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011]);
+        // constructor function for the different calculations
+        function Calculator(dropDownText, codedValue) {
+            this.dropDownText = dropDownText;
+            this.codedValue = codedValue;
+        }
+        self.calculators = ko.observableArray([]);
+        self.calculators.push(new Calculator('Birthdate from Age on Any Date', 'bfaod'));
+        self.calculators.push(new Calculator('Birthdate from Age on UK Census Day', 'bfaaukc'));
+        self.calculators.push(new Calculator('Birthdate from birth registration quarter', 'bfbrq'));
+
+        self.ukCensusYears = [1841, 1851, 1861, 1871, 1881, 1891, 1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011];
         self.ukCensusYear = ko.observable('');
         self.ukCensusDate = ko.observableArray(['1841-6-6', '1851-3-30', '1861-4-7', '1871-4-2', '1881-4-3', '1891-4-5', '1901-3-31', '1911-4-2', '1921-6-19', '1931-4-26', 'No census', '1951-4-8', '1961-4-23', '1971-4-25', '1981-4-5', '1991-4-21', '2001-4-29', '2011-3-27']);
-        self.displayedUKCensusDate = ko.computed(function(){
-            var i = self.ukCensusYears().indexOf(self.ukCensusYear());
+        self.displayedUKCensusDate = ko.computed(function() {
+            var i = self.ukCensusYears.indexOf(self.ukCensusYear());
             if (i < 0)
                 return '';
             var dString = self.ukCensusDate()[i];
             console.log('ducd:', i, dString);
-            if (self.calculation() == 'Age on UK Census Day') {
+            if (self.calculation() == 'bfaaukc') {
                 // only resets date if we actually want the census calculation
                 var parm = dString.split('-');
                 if (parm.length < 3)
                     return dString;
-                var d = new Date(Date.UTC(parm[0], parm[1]-1, parm[2]));
-                self.onDate1Min(d);
-                self.onDate1Max(d);
-                return d.toUTCString().replace(/ ..:.*/,''); // remove time from string
+                var d = new Date(Date.UTC(parm[0], parm[1] - 1, parm[2]));
+                // self.onDate1Min and Max are set elsewhere now
+                return d.toUTCString().replace(/ ..:.*/, ''); // remove time from string
             }
-            
+
             return dString;
         });
-        self.birthdateWanted = ko.computed(function(){
+        self.briUnits = ko.observableArray([]);
+        function BRIUnit(dropDownText, codedValue, minM, maxM) {
+            this.dropDownText = dropDownText;
+            this.codedValue = codedValue;
+            this.minM = minM;
+            this.maxM = maxM;
+        }
+        self.registrationMonthly = ko.computed(function() {
+            self.briUnits.push(new BRIUnit('Q1 Jan, Feb, Mar', 'q1', 0, 2));
+            self.briUnits.push(new BRIUnit('Q2 Apr, May, Jun', 'q2', 3, 5));
+            self.briUnits.push(new BRIUnit('Q3 Jul, Aug, Sep', 'q3', 6, 8));
+            self.briUnits.push(new BRIUnit('Q4 Oct, Nov, Dec', 'q4', 9, 11));
+            return false;
+        }); // cannot find this info. Assume all quarterly.
+        self.birthdateWanted = ko.computed(function() {
             return true;
         });
-        self.birthdateImpossible = ko.computed(function(){
+        self.birthdateImpossible = ko.computed(function() {
             return self.earliestBirthdateImpossible() || self.latestBirthdateImpossible();
         });
-        self.onDate1Set = ko.computed(function(){
+        self.onDate1Set = ko.computed(function() {
             return self.onDate1YSet() || self.onDate1MSet() || self.onDate1DSet();
         });
-        self.displayDefined = ko.computed(function(){
-            if (self.calculation() == 'Age on Date') {
+        self.displayDefined = ko.computed(function() {
+            if (self.calculation() == 'bfaod') {
                 if (!self.ageSet())
                     return false;
                 if (!self.ageValid())
@@ -733,12 +817,16 @@ var M$ = (function(my) {
                 if (self.birthdateImpossible())
                     return false;
             }
-            if (self.calculation() == 'Age on UK Census Day') {
+            if (self.calculation() == 'bfaaukc') {
                 if (!self.ageSet())
                     return false;
                 if (!self.ageValid())
                     return false;
                 if (self.birthdateImpossible())
+                    return false;
+            }
+            if (self.calculation() == 'bfbrq') {
+                if (!self.onDate1YSet())
                     return false;
             }
             return true;

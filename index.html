@@ -19,38 +19,53 @@ and open the template in the editor.
         <div class="mainDisplay">
             <div class="parmTitle">Calculation: </div>
             <div class="ib column" >
-                <select data-bind="options: calculators, value: calculation" >
+                <select data-bind="options: calculators, optionsText: 'dropDownText', optionsValue: 'codedValue', value: calculation" >
                 </select>
             </div>
-            <div data-bind="if: calculation()=='Age on UK Census Day'">
+            <div data-bind="if: calculation()=='bfaaukc'">
                 <div class="parmTitle">Census Year:</div> 
                 <div class="ib" >
                     <select data-bind="options: ukCensusYears, value:ukCensusYear">
                     </select>
                 </div>
-            </div>
+            </div>      
         </div>
         <div class="mainDisplay">
-
-            <div class="parmTitle"></div>
-            <div class="ib column" >Years</div>
-            <div class="ib column" >Months</div>
-            <div class="ib column" >Weeks</div>
-            <div class="ib column" >Days</div>
-            <br />
-            <div class="parmTitle">
-                Age:
+            <div data-bind="if: calculation() != 'bfbrq'">
+                <div class="parmTitle"></div>
+                <div class="ib column" >Years</div>
+                <div class="ib column" >Months</div>
+                <div class="ib column" >Weeks</div>
+                <div class="ib column" >Days</div>
+                <br />
+                <div class="parmTitle">
+                    Age:
+                </div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageYears, valueUpdate: 'afterkeydown', css: { invalid: !ageYValid() }"/></div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageMonths, valueUpdate: 'afterkeydown', css: { invalid: !ageMValid() }"/></div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageWeeks, valueUpdate: 'afterkeydown', css: { invalid: !ageWValid() }"/></div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageDays, valueUpdate: 'afterkeydown', css: { invalid: !ageDValid() }"/></div>
+                <br />
             </div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageYears, valueUpdate: 'afterkeydown', css: { invalid: !ageYValid() }"/></div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageMonths, valueUpdate: 'afterkeydown', css: { invalid: !ageMValid() }"/></div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageWeeks, valueUpdate: 'afterkeydown', css: { invalid: !ageWValid() }"/></div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageDays, valueUpdate: 'afterkeydown', css: { invalid: !ageDValid() }"/></div>
-            <br />
-            <div data-bind="if: calculation() == 'Age on UK Census Day'">
+            <div data-bind="if: calculation() == 'bfaaukc'">
                 <div class="parmTitle">On Census Day</div>
                 <div class="ib" data-bind="text:displayedUKCensusDate"></div>
             </div>
-            <div data-bind="if: calculation() == 'Age on Date'">
+            <div data-bind="if: calculation() == 'bfbrq'">
+                <div class="parmTitle"></div>
+                <div class="ib column" >Year</div>
+                <div class="ib" data-bind="if: registrationMonthly"><div class="ib column" >Month</div></div>
+                <div class="ib" data-bind="if: !registrationMonthly()"><div class="ib column" >Quarter</div></div>
+                <div></div>
+                <div class="parmTitle">Birth Registration</div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Year, valueUpdate: 'afterkeydown', css: { invalid: !onDate1YSet() }"></div>
+                <div class="ib column" >
+                    <select data-bind="options: briUnits, optionsText: 'dropDownText', value: briUnit" >
+                </select>
+                </div>
+                <br /><br />
+            </div>
+            <div data-bind="if: calculation() == 'bfaod'">
                 <div class="parmTitle"></div>
                 <div class="ib column" >Year</div>
                 <div class="ib column" >Month</div>
@@ -89,7 +104,7 @@ and open the template in the editor.
                     <div class="ib column" data-bind="text: dayFromDate(earliestBirthDate())"></div>
                     <div class="ib column" data-bind="text: '00:00'"></div>
                 </div>
-                    <div class="redAlert" data-bind="if: birthdateImpossible">Impossible!!</div>
+                <div class="redAlert" data-bind="if: birthdateImpossible">Impossible!!</div>
                 <br /><div class="parmTitle">Birth Latest:</div>
                 <div class="ib" data-bind="if: displayDefined">
                     <div class="ib column" data-bind="text: latestBirthDate().getFullYear()"></div>
