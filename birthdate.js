@@ -661,6 +661,17 @@ var M$ = (function(my) {
                 return self.latestBirthDate().toString();
             }
         });
+        self.calculators = ko.observableArray(['Age on Date', 'Age on UK Census Day', 'option3']);
+        self.calculation = ko.observable('');
+        self.ukCensusYears = ko.observableArray([1841, 1851, 1861, 1871, 1881, 1891, 1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 91981, 1991, 2001, 2011]);
+        self.ukCensusYear = ko.observable('');
+        self.ukCensusDate = ko.observableArray(['1841-6-6', '1851-3-30', '1861-4-7', '1871-4-2', '1881-4-3', '1891-4-5', '1901-3-31', '1911-4-2', '1921-6-19', '1931-4-26', '', '1951-4-8', '1961-4-23', '1971-4-25', '1981-4-5', '1991-4-21', '2001-4-29', '2011 sometime']);
+        self.displayedUKCensusDate = ko.computed(function(){
+            var i = self.ukCensusYears().indexOf(self.ukCensusYear());
+            console.log('ducd:', i, self.ukCensusDate()[i]);
+            
+            return self.ukCensusDate()[i];
+        });
     };
     return my;
 }(M$ || {}));
