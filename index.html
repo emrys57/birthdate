@@ -17,15 +17,21 @@ and open the template in the editor.
             <h1>Birthdate and Age Calculator</h1>
         </div>
         <div class="mainDisplay">
-            <select data-bind="options: calculators, value: calculation" >
-            </select>
+            <div class="parmTitle">Calculation: </div>
+            <div class="ib column" >
+                <select data-bind="options: calculators, value: calculation" >
+                </select>
+            </div>
             <div data-bind="if: calculation()=='Age on UK Census Day'">
-                <select data-bind="options: ukCensusYears, value:ukCensusYear"></select>
-                <div data-bind="text:displayedUKCensusDate"></div>
+                <div class="parmTitle">Census Year:</div> 
+                <div class="ib" >
+                    <select data-bind="options: ukCensusYears, value:ukCensusYear">
+                    </select>
+                </div>
             </div>
         </div>
         <div class="mainDisplay">
-            <div data-bind="if: calculation() == 'Age on Date'">
+
             <div class="parmTitle"></div>
             <div class="ib column" >Years</div>
             <div class="ib column" >Months</div>
@@ -38,50 +44,61 @@ and open the template in the editor.
             <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageYears, valueUpdate: 'afterkeydown', css: { invalid: !ageYValid() }"/></div>
             <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageMonths, valueUpdate: 'afterkeydown', css: { invalid: !ageMValid() }"/></div>
             <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageWeeks, valueUpdate: 'afterkeydown', css: { invalid: !ageWValid() }"/></div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageDays, valueUpdate: 'afterkeydown', css: { invalid: !ageDValid() }"/></div><br />
-
-            <div class="parmTitle"></div>
-            <div class="ib column" >Year</div>
-            <div class="ib column" >Month</div>
-            <div class="ib column" >Day</div>
+            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: ageDays, valueUpdate: 'afterkeydown', css: { invalid: !ageDValid() }"/></div>
             <br />
-            <div class="parmTitle">
-                On date:
+            <div data-bind="if: calculation() == 'Age on UK Census Day'">
+                <div class="parmTitle">On Census Day</div>
+                <div class="ib" data-bind="text:displayedUKCensusDate"></div>
             </div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Year, valueUpdate: 'afterkeydown', css: { invalid: !onDate1YSet() }"></div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Month, valueUpdate: 'afterkeydown', css: { invalid: !onDate1MValid()}"></div>
-            <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Day, valueUpdate: 'afterkeydown', css: { invalid: !onDate1DValid()}"></div>
-            <br />
-            <!--            <br />
-                        <div class="parmTitle">onDate1Min:</div>
-                        <div class="ib column" data-bind="text: onDate1YMin"></div>
-                        <div class="ib column" data-bind="text: onDate1MMin"></div>
-                        <div class="ib column" data-bind="text: onDate1DMin"></div>
-                        <div class="ib column" data-bind="text: onDate1DayMin"></div>
-                        <br /><div class="parmTitle">onDate1Max:</div>
-                        <div class="ib column" data-bind="text: onDate1YMax"></div>
-                        <div class="ib column" data-bind="text: onDate1MMax"></div>
-                        <div class="ib column" data-bind="text: onDate1DMax"></div>
-                        <div class="ib column" data-bind="text: onDate1DayMax"></div>
-                        <br />-->
+            <div data-bind="if: calculation() == 'Age on Date'">
+                <div class="parmTitle"></div>
+                <div class="ib column" >Year</div>
+                <div class="ib column" >Month</div>
+                <div class="ib column" >Day</div>
+                <br />
+                <div class="parmTitle">
+                    On date:
+                </div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Year, valueUpdate: 'afterkeydown', css: { invalid: !onDate1YSet() }"></div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Month, valueUpdate: 'afterkeydown', css: { invalid: !onDate1MValid()}"></div>
+                <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Day, valueUpdate: 'afterkeydown', css: { invalid: !onDate1DValid()}"></div>
+                <br />
+                <!--            <br />
+                            <div class="parmTitle">onDate1Min:</div>
+                            <div class="ib column" data-bind="text: onDate1YMin"></div>
+                            <div class="ib column" data-bind="text: onDate1MMin"></div>
+                            <div class="ib column" data-bind="text: onDate1DMin"></div>
+                            <div class="ib column" data-bind="text: onDate1DayMin"></div>
+                            <br /><div class="parmTitle">onDate1Max:</div>
+                            <div class="ib column" data-bind="text: onDate1YMax"></div>
+                            <div class="ib column" data-bind="text: onDate1MMax"></div>
+                            <div class="ib column" data-bind="text: onDate1DMax"></div>
+                            <div class="ib column" data-bind="text: onDate1DayMax"></div>
+                            <br />-->
 
-            <div class="parmTitle"></div>
-            <div class="redAlert" data-bind="if: birthdateInvalid">Invalid!</div>
-            <br />
-            <div class="parmTitle">Birth Earliest:</div>
-            <div class="ib column" data-bind="text: earliestBirthDate().getFullYear()"></div>
-            <div class="ib column" data-bind="text: earliestBirthDate().getMonth()+1"></div>
-            <div class="ib column" data-bind="text: earliestBirthDate().getDate()"></div>
-            <div class="ib column" data-bind="text: dayFromDate(earliestBirthDate())"></div>
-            <div class="ib column" data-bind="text: '00:00'"></div>
-            <div class="redAlert" data-bind="if: earliestBirthdateImpossible">Impossible!!</div>
-            <br /><div class="parmTitle">Birth Latest:</div>
-            <div class="ib column" data-bind="text: latestBirthDate().getFullYear()"></div>
-            <div class="ib column" data-bind="text: latestBirthDate().getMonth()+1"></div>
-            <div class="ib column" data-bind="text: latestBirthDate().getDate()"></div>
-            <div class="ib column" data-bind="text: dayFromDate(latestBirthDate())"></div>
-            <div class="ib column" data-bind="text: '23:59'"></div>
-            <br />
+                <div class="parmTitle"></div>
+                <div class="redAlert" data-bind="if: birthdateInvalid">Invalid!</div>
+                <br />
+            </div>
+            <div data-bind="if: birthdateWanted">
+                <div class="parmTitle">Birth Earliest:</div>
+                <div class="ib" data-bind="if: displayDefined">
+                    <div class="ib column" data-bind="text: earliestBirthDate().getFullYear()"></div>
+                    <div class="ib column" data-bind="text: earliestBirthDate().getMonth()+1"></div>
+                    <div class="ib column" data-bind="text: earliestBirthDate().getDate()"></div>
+                    <div class="ib column" data-bind="text: dayFromDate(earliestBirthDate())"></div>
+                    <div class="ib column" data-bind="text: '00:00'"></div>
+                </div>
+                    <div class="redAlert" data-bind="if: birthdateImpossible">Impossible!!</div>
+                <br /><div class="parmTitle">Birth Latest:</div>
+                <div class="ib" data-bind="if: displayDefined">
+                    <div class="ib column" data-bind="text: latestBirthDate().getFullYear()"></div>
+                    <div class="ib column" data-bind="text: latestBirthDate().getMonth()+1"></div>
+                    <div class="ib column" data-bind="text: latestBirthDate().getDate()"></div>
+                    <div class="ib column" data-bind="text: dayFromDate(latestBirthDate())"></div>
+                    <div class="ib column" data-bind="text: '23:59'"></div>
+                </div>
+                <br />
             </div>
         </div>
         <!--        <div class="mainDisplay" >

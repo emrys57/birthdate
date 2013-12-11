@@ -294,13 +294,16 @@ var M$ = (function(my) {
             return true;
         });
 
-        self.onDate1Min = ko.computed(function() {
+        self.onDate1Min = ko.observable(new Date());
+        self.onDate1Max = ko.observable(new Date());
+        self.setDate1 = ko.computed(function() {
+            // done like this so can set onDate1Min in other ways too
             var a = new Date(Date.UTC(self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin()));
-//            console.log('sod1m:', self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin(), a.toUTCString());
-            return a;
-        });
-        self.onDate1Max = ko.computed(function() {
-            return new Date(Date.UTC(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999));
+            var b = new Date(Date.UTC(self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), 23, 59, 59, 999));
+            self.onDate1Min(a);
+            self.onDate1Max(b);
+//            console.log('setDate: min:', self.onDate1YMin(), self.onDate1MMin() - 1, self.onDate1DMin(), a.toUTCString());
+//            console.log('setDate: max:', self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), b.toUTCString());
         });
         self.onDate1DayMin = ko.computed(function() {
             return dayFromDate(self.onDate1Min());
@@ -663,14 +666,59 @@ var M$ = (function(my) {
         });
         self.calculators = ko.observableArray(['Age on Date', 'Age on UK Census Day', 'option3']);
         self.calculation = ko.observable('');
-        self.ukCensusYears = ko.observableArray([1841, 1851, 1861, 1871, 1881, 1891, 1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 91981, 1991, 2001, 2011]);
+        self.ukCensusYears = ko.observableArray([1841, 1851, 1861, 1871, 1881, 1891, 1901, 1911, 1921, 1931, 1941, 1951, 1961, 1971, 1981, 1991, 2001, 2011]);
         self.ukCensusYear = ko.observable('');
-        self.ukCensusDate = ko.observableArray(['1841-6-6', '1851-3-30', '1861-4-7', '1871-4-2', '1881-4-3', '1891-4-5', '1901-3-31', '1911-4-2', '1921-6-19', '1931-4-26', '', '1951-4-8', '1961-4-23', '1971-4-25', '1981-4-5', '1991-4-21', '2001-4-29', '2011 sometime']);
+        self.ukCensusDate = ko.observableArray(['1841-6-6', '1851-3-30', '1861-4-7', '1871-4-2', '1881-4-3', '1891-4-5', '1901-3-31', '1911-4-2', '1921-6-19', '1931-4-26', 'No census', '1951-4-8', '1961-4-23', '1971-4-25', '1981-4-5', '1991-4-21', '2001-4-29', '2011-3-27']);
         self.displayedUKCensusDate = ko.computed(function(){
             var i = self.ukCensusYears().indexOf(self.ukCensusYear());
-            console.log('ducd:', i, self.ukCensusDate()[i]);
+            if (i < 0)
+                return '';
+            var dString = self.ukCensusDate()[i];
+            console.log('ducd:', i, dString);
+            if (self.calculation() == 'Age on UK Census Day') {
+                // only resets date if we actually want the census calculation
+                var parm = dString.split('-');
+                if (parm.length < 3)
+                    return dString;
+                var d = new Date(Date.UTC(parm[0], parm[1]-1, parm[2]));
+                self.onDate1Min(d);
+                self.onDate1Max(d);
+                return d.toUTCString().replace(/ ..:.*/,''); // remove time from string
+            }
             
-            return self.ukCensusDate()[i];
+            return dString;
+        });
+        self.birthdateWanted = ko.computed(function(){
+            return true;
+        });
+        self.birthdateImpossible = ko.computed(function(){
+            return self.earliestBirthdateImpossible() || self.latestBirthdateImpossible();
+        });
+        self.onDate1Set = ko.computed(function(){
+            return self.onDate1YSet() || self.onDate1MSet() || self.onDate1DSet();
+        });
+        self.displayDefined = ko.computed(function(){
+            if (self.calculation() == 'Age on Date') {
+                if (!self.ageSet())
+                    return false;
+                if (!self.ageValid())
+                    return false;
+                if (!self.onDate1Set())
+                    return false;
+                if (!self.onDate1Valid())
+                    return false;
+                if (self.birthdateImpossible())
+                    return false;
+            }
+            if (self.calculation() == 'Age on UK Census Day') {
+                if (!self.ageSet())
+                    return false;
+                if (!self.ageValid())
+                    return false;
+                if (self.birthdateImpossible())
+                    return false;
+            }
+            return true;
         });
     };
     return my;
