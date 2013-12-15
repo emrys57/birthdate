@@ -36,6 +36,8 @@ var M$ = (function(my) {
         // This needs adjusting for the Julian-to-Gregorian switch
         // Javascript Date gets the day of the week wrong in Julian dates
         // although other things seem fine
+        // NO THIS DOES NOT WORK
+        // Because javascript gets the leap year wrong in 1700
         if (typeof chars == 'undefined')
             chars = 3;
         var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];

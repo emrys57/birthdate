@@ -62,7 +62,7 @@ and open the template in the editor.
                 <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Year, valueUpdate: 'afterkeydown', css: { invalid: !onDate1YSet() }"></div>
                 <div class="ib column" >
                     <select data-bind="options: briUnits, optionsText: 'dropDownText', value: briUnit" >
-                </select>
+                    </select>
                 </div>
                 <br /><br />
             </div>
@@ -81,8 +81,8 @@ and open the template in the editor.
                 <div class="ib" data-bind="if: M$.isJulian(onDate1Min())">
                     <div class="ib column"></div>
                     <div class="ib column"></div>
-                        <div class="ib column julianWarning">Julian</div>
-                    </div>
+                    <div class="ib column julianWarning">Julian</div>
+                </div>
                 <br />
                 <!--            <br />
                             <div class="parmTitle">onDate1Min:</div>
@@ -149,7 +149,7 @@ and open the template in the editor.
                 </div>
             </div>
         </div>
-             
+
         <div class="development" data-bind="if:developmentWanted">
             <div class="developmentBox" id="developmentBox" style="">
                 <div style="">Development Only</div>
