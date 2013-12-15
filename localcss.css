@@ -69,3 +69,7 @@ root {
     background-color: rgba(249, 227, 204, 1);
     box-shadow: 0em 0em 1em grey;
 }
+
+.julianWarning {
+    color: rgba(128, 0, 0, 1);
+}

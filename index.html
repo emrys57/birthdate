@@ -78,6 +78,11 @@ and open the template in the editor.
                 <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Year, valueUpdate: 'afterkeydown', css: { invalid: !onDate1YSet() }"></div>
                 <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Month, valueUpdate: 'afterkeydown', css: { invalid: !onDate1MValid()}"></div>
                 <div class="ib column" ><input type="text" class="columnInput" data-bind="value: onDate1Day, valueUpdate: 'afterkeydown', css: { invalid: !onDate1DValid()}"></div>
+                <div class="ib" data-bind="if: M$.isJulian(onDate1Min())">
+                    <div class="ib column"></div>
+                    <div class="ib column"></div>
+                        <div class="ib column julianWarning">Julian</div>
+                    </div>
                 <br />
                 <!--            <br />
                             <div class="parmTitle">onDate1Min:</div>
@@ -102,8 +107,11 @@ and open the template in the editor.
                     <div class="ib column" data-bind="text: earliestBirthDate().getFullYear()"></div>
                     <div class="ib column" data-bind="text: earliestBirthDate().getMonth()+1"></div>
                     <div class="ib column" data-bind="text: earliestBirthDate().getDate()"></div>
-                    <div class="ib column" data-bind="text: dayFromDate(earliestBirthDate())"></div>
+                    <div class="ib column" data-bind="text: M$.dayFromDate(earliestBirthDate())"></div>
                     <div class="ib column" data-bind="text: '00:00'"></div>
+                    <div class="ib" data-bind="if: M$.isJulian(earliestBirthDate())">
+                        <div class="ib column julianWarning">Julian</div>
+                    </div>
                 </div>
                 <div class="redAlert" data-bind="if: birthdateImpossible">Impossible!!</div>
                 <br /><div class="parmTitle">Birth Latest:</div>
@@ -111,8 +119,11 @@ and open the template in the editor.
                     <div class="ib column" data-bind="text: latestBirthDate().getFullYear()"></div>
                     <div class="ib column" data-bind="text: latestBirthDate().getMonth()+1"></div>
                     <div class="ib column" data-bind="text: latestBirthDate().getDate()"></div>
-                    <div class="ib column" data-bind="text: dayFromDate(latestBirthDate())"></div>
+                    <div class="ib column" data-bind="text: M$.dayFromDate(latestBirthDate())"></div>
                     <div class="ib column" data-bind="text: '23:59'"></div>
+                    <div class="ib" data-bind="if: M$.isJulian(latestBirthDate())">
+                        <div class="ib column julianWarning">Julian</div>
+                    </div>
                 </div>
                 <br />
             </div>

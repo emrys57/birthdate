@@ -19,14 +19,33 @@ var ko = (function(my) {
     return my;
 }(ko || {}));
 
-function dayFromDate(when, chars) {
-    if (typeof chars == 'undefined')
-        chars = 3;
-    var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    return days[when.getDay()].substr(0, chars);
-}
 
 var M$ = (function(my) {
+
+
+
+    my.isJulian = function(when) {
+        // This needs adjusting for the Julian-to-Gregorian switch
+        // Javascript Date gets the day of the week wrong in Julian dates
+        // although other things seem fine
+        var jToGDate = new Date(Date.UTC(1752, 9 - 1, 3)); // nonexistant date! 
+        return when.getTime() < jToGDate.getTime();
+    };
+
+    my.dayFromDate = function(when, chars) {
+        // This needs adjusting for the Julian-to-Gregorian switch
+        // Javascript Date gets the day of the week wrong in Julian dates
+        // although other things seem fine
+        if (typeof chars == 'undefined')
+            chars = 3;
+        var days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+        var d = when.getDay();
+        if (my.isJulian(when)) {// julian date
+//        console.log('dayFromDate: Adjusting Julian day', when.toUTCString());
+            d = (d + 4) % 7; // adjust day of week
+        }
+        return days[d].substr(0, chars);
+    };
 
     my.viewModel = function() {
         var self = this;
@@ -230,14 +249,14 @@ var M$ = (function(my) {
             var trimmed2 = ('' + self.onDate1Year()).trim();
             var trimmed = trimmed2.replace(/[^0-9]/g, '');
             if ((trimmed === '') || (trimmed !== trimmed2)) {
-                self.onDate1YMin(1752);
+                self.onDate1YMin(200);
                 self.onDate1YMax(2100);
                 return false;
             } else {
                 var y = Math.floor(trimmed);
                 console.log('year2: ' + y);
-                if ((y > 2100) || (y <= 1752)) {
-                    self.onDate1YMin(1752);
+                if ((y > 2100) || (y <= 200)) {
+                    self.onDate1YMin(200);
                     self.onDate1YMax(2100);
                     return false;
                 } else {
@@ -375,10 +394,10 @@ var M$ = (function(my) {
 //            console.log('setDate: max:', self.onDate1YMax(), self.onDate1MMax() - 1, self.onDate1DMax(), b.toUTCString());
         });
         self.onDate1DayMin = ko.computed(function() {
-            return dayFromDate(self.onDate1Min());
+            return my.dayFromDate(self.onDate1Min());
         });
         self.onDate1DayMax = ko.computed(function() {
-            return dayFromDate(self.onDate1Max());
+            return my.dayFromDate(self.onDate1Max());
         });
         self.onDate1Valid = ko.computed(function() {
             return self.onDate1YValid();
@@ -536,10 +555,11 @@ var M$ = (function(my) {
                     model.problems('integer');
                     return false;
                 }
-                if (model.y() <= 1752) { // Julian calendar, cannot cope!
-                    model.problems('julian');
-                    return false;
-                }
+                // julian works now
+//                if (model.y() <= 1752) { // Julian calendar, cannot cope!
+//                    model.problems('julian');
+//                    return false;
+//                }
                 if ((model.m() < 1) || (model.m() > 12)) {
                     model.problems('month');
                     return false;
@@ -842,7 +862,7 @@ var M$ = (function(my) {
             var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit'];
             for (var i = 0; i < savedThings.length; i++) { // all are assumed to be ko functions
                 var a = self[savedThings[i]]();
-                if ((typeof a == 'undefined') || (a == 0) || (a == '')) // do not save it
+                if ((typeof a == 'undefined') || ((a!=='0')&&(a == 0)) || (a == '')) // do not save it
                     continue;
 //                console.log('saveButtonPressed: Will save', savedThings[i], typeof a, a);
                 options[savedThings[i]] = self[savedThings[i]](); // fetch ko.observable
