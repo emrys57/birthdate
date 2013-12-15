@@ -5,12 +5,13 @@ and open the template in the editor.
 <!DOCTYPE html>
 <html>
     <head>
-        <title></title>
+        <title>Birthdate</title>
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <link rel="stylesheet" type="text/css" href="localcss.css" />
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
         <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/knockout/2.3.0/knockout-min.js'></script>
         <script type='text/javascript' src='birthdate.js'></script>
+        <script type='text/javascript' src='dismiss.js'></script>
     </head>
     <body>
         <div class="mainDisplay">
@@ -128,6 +129,16 @@ and open the template in the editor.
                         </div>
                     </div>
                 </div>-->
+        <div class="mainDisplay">
+            <input title='Create a URL you can bookmark with these options' data-bind="click: saveButtonPressed, clickBubble: false" type='submit' id='saveButton2' class='smallButton' style="width: 10em;" value='Save Options' />
+            <!--<div class="linkzHelpButton" style="margin-left: 10px;" id="saveButtonHelp"></div>-->
+            <div style="display: inline-block; position: absolute;">
+                <div id="saveButtonConfirm" class="dismissOnClick" style="display: none;  margin-top: -7px; ">
+                    <div class="ePanel" style="width: auto; margin-left: 1em;"> The options have been saved in the URL for bookmarking and copying.</div>
+                </div>
+            </div>
+        </div>
+             
         <div class="development" data-bind="if:developmentWanted">
             <div class="developmentBox" id="developmentBox" style="">
                 <div style="">Development Only</div>

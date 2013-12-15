@@ -831,17 +831,60 @@ var M$ = (function(my) {
             }
             return true;
         });
-        self.developmentWanted = ko.computed(function(){
+        self.developmentWanted = ko.computed(function() {
             var a = window.location.hostname;
             if (a == 'localhost')
                 return true;
             return false;
         });
+        self.saveButtonPressed = function() {
+            var options = {};
+            var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit'];
+            for (var i = 0; i < savedThings.length; i++) { // all are assumed to be ko functions
+                var a = self[savedThings[i]]();
+                if ((typeof a == 'undefined') || (a == 0) || (a == '')) // do not save it
+                    continue;
+//                console.log('saveButtonPressed: Will save', savedThings[i], typeof a, a);
+                options[savedThings[i]] = self[savedThings[i]](); // fetch ko.observable
+            }
+            var jsonSavedOptions = JSON.stringify(options);
+            var encodedJsonSavedOptions = encodeURIComponent(jsonSavedOptions);
+            window.history.pushState({}, "", window.location.pathname + "?options=" + encodedJsonSavedOptions);
+            $('#saveButtonConfirm').slideDown();
+        };
+
+        self.restore = function(jsonThingsToRestore) {
+            var thingsToRestore = JSON.parse(jsonThingsToRestore);
+            if (!thingsToRestore)
+                return;
+            for (var thing in thingsToRestore)
+                if (thingsToRestore.hasOwnProperty(thing))
+                    if (typeof self[thing] == 'function')
+                        self[thing](thingsToRestore[thing]); // set ko.observable to saved value
+                    else
+                        self[thing] = thingsToRestore[thing];
+        };
     };
+
+    my.getParameterByName = function(name) {
+        var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+        return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+    };
+
+    my.checkRestore = function(viewModel) { // can only do this after having instantiated the filters
+        var jsonSavedOptions = my.getParameterByName('options');
+        console.log('options: ', jsonSavedOptions);
+        if (jsonSavedOptions) { // that's an object, not a string, an is null if it wasn't defined
+            viewModel.restore(jsonSavedOptions);
+        }
+    };
+
     return my;
 }(M$ || {}));
 
 $(document).ready(function() {
-    ko.applyBindings(new M$.viewModel());
+    var viewModel = new M$.viewModel();
+    ko.applyBindings(viewModel);
     console.log('Hello!');
+    M$.checkRestore(viewModel);
 });
