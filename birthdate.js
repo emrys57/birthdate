@@ -251,14 +251,14 @@ var M$ = (function(my) {
             var trimmed2 = ('' + self.onDate1Year()).trim();
             var trimmed = trimmed2.replace(/[^0-9]/g, '');
             if ((trimmed === '') || (trimmed !== trimmed2)) {
-                self.onDate1YMin(200);
+                self.onDate1YMin(1701);
                 self.onDate1YMax(2100);
                 return false;
             } else {
                 var y = Math.floor(trimmed);
                 console.log('year2: ' + y);
-                if ((y > 2100) || (y <= 200)) {
-                    self.onDate1YMin(200);
+                if ((y > 2100) || (y < 1701)) {
+                    self.onDate1YMin(1701);
                     self.onDate1YMax(2100);
                     return false;
                 } else {
@@ -611,7 +611,7 @@ var M$ = (function(my) {
         });
         self.earliestBirthdateImpossible = ko.observable(false);
         // Earliest birthdate has to be computed with ageYMax, which might be greater than ageYMin for the 1841 census.
-        self.earliestBirthDate = ko.computed({
+        self.earliestBirthdate = ko.computed({
             read: function() {
                 // This has proved exceptionally confusing and tricky.
                 // Every straightforward approach so far has failed.
@@ -691,7 +691,7 @@ var M$ = (function(my) {
         self.latestBirthdateImpossible = ko.observable(false);
 
         // latest birthdate has to be computed with ageYMin. This is at the moment always the same as ageY. But, maybe not later.
-        self.latestBirthDate = ko.computed({
+        self.latestBirthdate = ko.computed({
             read: function() {
                 // do it this way round so that we know whether the day-of-month exists in the month
                 // that we're trying to set, when we set the month.
@@ -760,16 +760,16 @@ var M$ = (function(my) {
         });
         self.birthdateInvalid = ko.computed(function() {
             return false;
-            return !self.onDate1Valid() || (self.latestBirthDate().getTime() < self.earliestBirthDate().getTime());
+            return !self.onDate1Valid() || (self.latestBirthdate().getTime() < self.earliestBirthdate().getTime());
         });
-        self.earliestBirthDateString = ko.computed({
+        self.earliestBirthdateString = ko.computed({
             read: function() {
-                return self.earliestBirthDate();
+                return self.earliestBirthdate();
             }
         });
-        self.latestBirthDateString = ko.computed({
+        self.latestBirthdateString = ko.computed({
             read: function() {
-                return self.latestBirthDate().toString();
+                return self.latestBirthdate().toString();
             }
         });
         // constructor function for the different calculations
@@ -852,6 +852,15 @@ var M$ = (function(my) {
                     return false;
             }
             return true;
+        });
+        self.onDate1ShowJulian = ko.computed(function(){
+            return self.onDate1Valid() && M$.isJulian(self.onDate1Min());
+        });
+        self.earliestBirthdateJulian = ko.computed(function(){
+            return self.displayDefined() && M$.isJulian(self.earliestBirthdate());
+        });
+        self.latestBirthdateJulian = ko.computed(function(){
+            return self.displayDefined() && M$.isJulian(self.latestBirthdate());
         });
         self.developmentWanted = ko.computed(function() {
             var a = window.location.hostname;
