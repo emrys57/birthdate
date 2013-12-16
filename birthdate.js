@@ -22,7 +22,11 @@ var ko = (function(my) {
 
 var M$ = (function(my) {
 
-
+    my.tooEarly = function(when) {
+        // Julian dates are too early because the New Year was at March 25 in Britain!
+        var jMinDate = new Date(Date.UTC(1752,9-1,14));
+        return when.getTime() < jMinDate.getTime();
+    };
 
     my.isJulian = function(when) {
         // This needs adjusting for the Julian-to-Gregorian switch
@@ -251,14 +255,14 @@ var M$ = (function(my) {
             var trimmed2 = ('' + self.onDate1Year()).trim();
             var trimmed = trimmed2.replace(/[^0-9]/g, '');
             if ((trimmed === '') || (trimmed !== trimmed2)) {
-                self.onDate1YMin(1701);
+                self.onDate1YMin(1753);
                 self.onDate1YMax(2100);
                 return false;
             } else {
                 var y = Math.floor(trimmed);
                 console.log('year2: ' + y);
-                if ((y > 2100) || (y < 1701)) {
-                    self.onDate1YMin(1701);
+                if ((y > 2100) || (y < 1753)) {
+                    self.onDate1YMin(1753);
                     self.onDate1YMax(2100);
                     return false;
                 } else {
@@ -838,6 +842,8 @@ var M$ = (function(my) {
                     return false;
                 if (self.birthdateImpossible())
                     return false;
+            if (self.earliestBirthdateTooEarly())
+                return false;
             }
             if (self.calculation() == 'bfaaukc') {
                 if (!self.ageSet())
@@ -846,12 +852,19 @@ var M$ = (function(my) {
                     return false;
                 if (self.birthdateImpossible())
                     return false;
+            if (self.earliestBirthdateTooEarly())
+                return false;
             }
             if (self.calculation() == 'bfbrq') {
                 if (!self.onDate1YSet())
                     return false;
+            if (self.earliestBirthdateTooEarly())
+                return false;
             }
             return true;
+        });
+        self.earliestBirthdateTooEarly = ko.computed(function(){
+            return M$.tooEarly(self.earliestBirthdate());
         });
         self.onDate1ShowJulian = ko.computed(function(){
             return self.onDate1Valid() && M$.isJulian(self.onDate1Min());

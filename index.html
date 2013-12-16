@@ -113,6 +113,9 @@ and open the template in the editor.
                         <div class="ib column julianWarning">Julian</div>
                     </div>
                 </div>
+                <div class="ib" data-bind="if: earliestBirthdateTooEarly">
+                        <div class="ib julianWarning">Sorry! Too long ago.</div>
+                    </div>
                 <div class="redAlert" data-bind="if: birthdateImpossible">Impossible!!</div>
                 <br /><div class="parmTitle">Birth Latest:</div>
                 <div class="ib" data-bind="if: displayDefined">
@@ -148,6 +151,7 @@ and open the template in the editor.
                     <div class="ePanel" style="width: auto; margin-left: 1em;"> The options have been saved in the URL for bookmarking and copying.</div>
                 </div>
             </div>
+            <div style="float: right; display: inline-block;"><a href="http://www.eversholt.org.uk/blog/?cat=3">Much more info here!</a></div>
         </div>
 
         <div class="development" data-bind="if:developmentWanted">
