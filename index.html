@@ -146,13 +146,31 @@ and open the template in the editor.
                 </div>-->
         <div class="mainDisplay">
             <input title='Create a URL you can bookmark with these options' data-bind="click: saveButtonPressed, clickBubble: false" type='submit' id='saveButton2' class='smallButton' style="width: 10em;" value='Save Options' />
+            <input title='Adjust the display in detail' data-bind="click: settingsButtonPressed, value: settingsOpen()? 'Close Settings': 'Settings'" type='submit' id='settingsButton' class='smallButton' style="width: 10em; margin-left: 3em;"  />
             <!--<div class="linkzHelpButton" style="margin-left: 10px;" id="saveButtonHelp"></div>-->
-            <div style="display: inline-block; position: absolute;">
+            
+            <div style="float: right; display: inline-block;"><a href="http://www.eversholt.org.uk/blog/?cat=3">Much more info here!</a></div>
+            <div></div>
+            <div style="display: inline-block; position: absolute; margin-top: 0.5em;">
                 <div id="saveButtonConfirm" class="dismissOnClick" style="display: none;  margin-top: -7px; ">
                     <div class="ePanel" style="width: auto; margin-left: 1em;"> The options have been saved in the URL for bookmarking and copying.</div>
                 </div>
             </div>
-            <div style="float: right; display: inline-block;"><a href="http://www.eversholt.org.uk/blog/?cat=3">Much more info here!</a></div>
+            <div data-bind="slideContent: settingsOpen" class="settings">
+                <div class="content" style="display: none;">
+                    <label class="checkboxLabel"><input type="checkbox" class="checkboxInput" data-bind="checked: customBirthdates"> Show custom formatted birthdates.</label>
+                    <div data-bind="slideContent2: customBirthdates" style="display: none">
+                        <div >
+                            Touch to insert:
+                            <input title='Insert Earliest Birthdate into custom display' data-bind="click: insertPressed" type='submit' class='smallButton' style="width: 10em;" value='Earliest Birthdate' />
+                            <input title='Insert Latest Birthdate into custom display' data-bind="click: insertPressed" type='submit' class='smallButton' style="width: 10em;" value='Latest Birthdate' />
+                            or type any text you want.
+                            <div></div>
+                            <div contenteditable="true" class="editable" id="customBirthdateDefinition"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="development" data-bind="if:developmentWanted">

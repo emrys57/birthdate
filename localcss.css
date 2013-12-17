@@ -73,3 +73,16 @@ root {
 .julianWarning {
     color: rgba(128, 0, 0, 1);
 }
+
+.settings {
+    font-family: verdana;
+    font-size: 0.8em;
+}
+.editable {
+    margin: 0.5em;
+    width: 60em;
+    height: 6em;
+    padding: 0.5em;
+    border: 1px solid rgba(0,0,0,0.2);
+    background-color: #ccffff;
+}

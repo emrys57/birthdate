@@ -24,7 +24,7 @@ var M$ = (function(my) {
 
     my.tooEarly = function(when) {
         // Julian dates are too early because the New Year was at March 25 in Britain!
-        var jMinDate = new Date(Date.UTC(1752,9-1,14));
+        var jMinDate = new Date(Date.UTC(1752, 9 - 1, 14));
         return when.getTime() < jMinDate.getTime();
     };
 
@@ -842,8 +842,8 @@ var M$ = (function(my) {
                     return false;
                 if (self.birthdateImpossible())
                     return false;
-            if (self.earliestBirthdateTooEarly())
-                return false;
+                if (self.earliestBirthdateTooEarly())
+                    return false;
             }
             if (self.calculation() == 'bfaaukc') {
                 if (!self.ageSet())
@@ -852,27 +852,27 @@ var M$ = (function(my) {
                     return false;
                 if (self.birthdateImpossible())
                     return false;
-            if (self.earliestBirthdateTooEarly())
-                return false;
+                if (self.earliestBirthdateTooEarly())
+                    return false;
             }
             if (self.calculation() == 'bfbrq') {
                 if (!self.onDate1YSet())
                     return false;
-            if (self.earliestBirthdateTooEarly())
-                return false;
+                if (self.earliestBirthdateTooEarly())
+                    return false;
             }
             return true;
         });
-        self.earliestBirthdateTooEarly = ko.computed(function(){
+        self.earliestBirthdateTooEarly = ko.computed(function() {
             return M$.tooEarly(self.earliestBirthdate());
         });
-        self.onDate1ShowJulian = ko.computed(function(){
+        self.onDate1ShowJulian = ko.computed(function() {
             return self.onDate1Valid() && M$.isJulian(self.onDate1Min());
         });
-        self.earliestBirthdateJulian = ko.computed(function(){
+        self.earliestBirthdateJulian = ko.computed(function() {
             return self.displayDefined() && M$.isJulian(self.earliestBirthdate());
         });
-        self.latestBirthdateJulian = ko.computed(function(){
+        self.latestBirthdateJulian = ko.computed(function() {
             return self.displayDefined() && M$.isJulian(self.latestBirthdate());
         });
         self.developmentWanted = ko.computed(function() {
@@ -886,7 +886,7 @@ var M$ = (function(my) {
             var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit'];
             for (var i = 0; i < savedThings.length; i++) { // all are assumed to be ko functions
                 var a = self[savedThings[i]]();
-                if ((typeof a == 'undefined') || ((a!=='0')&&(a == 0)) || (a == '')) // do not save it
+                if ((typeof a == 'undefined') || ((a !== '0') && (a == 0)) || (a == '')) // do not save it
                     continue;
 //                console.log('saveButtonPressed: Will save', savedThings[i], typeof a, a);
                 options[savedThings[i]] = self[savedThings[i]](); // fetch ko.observable
@@ -895,6 +895,87 @@ var M$ = (function(my) {
             var encodedJsonSavedOptions = encodeURIComponent(jsonSavedOptions);
             window.history.pushState({}, "", window.location.pathname + "?options=" + encodedJsonSavedOptions);
             $('#saveButtonConfirm').slideDown();
+        };
+        self.customBirthdates = ko.observable(false);
+        self.settingsOpen = ko.observable(false);
+        self.settingsButtonPressed = function() {
+            self.settingsOpen(!self.settingsOpen());
+        };
+
+        // http://stackoverflow.com/questions/8339857/how-to-know-if-selected-text-is-inside-a-specific-div/8340432#8340432
+        // http://stackoverflow.com/questions/6690752/insert-html-at-caret-in-a-contenteditable-div
+        function isOrContains(node, container) {
+            while (node) {
+                if (node === container) {
+                    return true;
+                }
+                node = node.parentNode;
+            }
+            return false;
+        }
+
+        function elementContainsSelection(el) {
+            var sel;
+            if (window.getSelection) {
+                sel = window.getSelection();
+                if (sel.rangeCount > 0) {
+                    for (var i = 0; i < sel.rangeCount; ++i) {
+                        if (!isOrContains(sel.getRangeAt(i).commonAncestorContainer, el)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                }
+            } else {
+                sel = document.selection;
+                if ((sel) && sel.type != "Control") {
+                    return isOrContains(sel.createRange().parentElement(), el);
+                }
+            }
+            return false;
+        }
+        function pasteHtmlAtCaret(html, selectPastedContent, element) {
+            var sel, range;
+            if (window.getSelection) {
+                if (!elementContainsSelection(element))
+                    return;
+                // IE9 and non-IE
+                sel = window.getSelection();
+                if (sel.getRangeAt && sel.rangeCount) {
+                    range = sel.getRangeAt(0);
+                    range.deleteContents();
+
+                    // Range.createContextualFragment() would be useful here but is
+                    // only relatively recently standardized and is not supported in
+                    // some browsers (IE9, for one)
+                    var el = document.createElement("div");
+                    el.innerHTML = html;
+                    var frag = document.createDocumentFragment(), node, lastNode;
+                    node = el.firstChild;
+                    while (node) {
+                        lastNode = frag.appendChild(node);
+                        node = el.firstChild;
+                    }
+                    var firstNode = frag.firstChild;
+                    range.insertNode(frag);
+
+                    // Preserve the selection
+                    if (lastNode) {
+                        range = range.cloneRange();
+                        range.setStartAfter(lastNode);
+                        if (selectPastedContent) {
+                            range.setStartBefore(firstNode);
+                        } else {
+                            range.collapse(true);
+                        }
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+                    }
+                }
+            }
+        }
+        self.insertPressed = function() {
+            pasteHtmlAtCaret('<input class="smallButton" type="submit" value="hello!"/>', false, $('#customBirthdateDefinition').get(0));
         };
 
         self.restore = function(jsonThingsToRestore) {
@@ -927,7 +1008,66 @@ var M$ = (function(my) {
 }(M$ || {}));
 
 $(document).ready(function() {
+    jQuery.fn.extend({
+        insertAtCaret: function(myValue) {
+            return this.each(function(i) {
+                if (document.selection) {
+                    //For browsers like Internet Explorer
+                    this.focus();
+                    sel = document.selection.createRange();
+                    sel.text = myValue;
+                    this.focus();
+                }
+                else if (this.selectionStart || this.selectionStart == '0') {
+                    //For browsers like Firefox and Webkit based
+                    var startPos = this.selectionStart;
+                    var endPos = this.selectionEnd;
+                    var scrollTop = this.scrollTop;
+                    this.value = this.value.substring(0, startPos) + myValue + this.value.substring(endPos, this.value.length);
+                    this.focus();
+                    this.selectionStart = startPos + myValue.length;
+                    this.selectionEnd = startPos + myValue.length;
+                    this.scrollTop = scrollTop;
+                } else {
+                    this.value += myValue;
+                    this.focus();
+                }
+            });
+        }
+    });
+    var effectDuration = 500;
+
     var viewModel = new M$.viewModel();
+    ko.bindingHandlers.slideContent = {// This is used to slide the content when the choice is opened or closed
+        init: function() {
+//            console.log('slideContent: init');
+        },
+        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+            var opened = ko.unwrap(valueAccessor());
+//            console.log("update:", element, valueAccessor, allBindingsAccessor, viewModel, bindingContext, opened);
+            if (opened) {
+                $(element).filter(':not(.opened)').addClass('opened');
+                $(element).find('> .content:not(:visible)').slideDown(effectDuration); // immediate children only
+            } else {
+                $(element).filter('.opened').removeClass('opened');
+                $(element).find('> .content:visible').slideUp(effectDuration);
+            }
+        }
+    };
+    ko.bindingHandlers.slideContent2 = {
+        init: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+//            console.log("init:", element, valueAccessor, allBindingsAccessor, viewModel, bindingContext, ko.unwrap(valueAccessor()));
+            var opened = ko.unwrap(valueAccessor());
+        },
+        update: function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
+//            console.log("update:", element, valueAccessor, allBindingsAccessor, viewModel, bindingContext, ko.unwrap(valueAccessor()));
+            var opened = ko.unwrap(valueAccessor());
+            if (opened)
+                $(element).slideDown(effectDuration);
+            else
+                $(element).slideUp(effectDuration);
+        }
+    };
     ko.applyBindings(viewModel);
     console.log('Hello!');
     M$.checkRestore(viewModel);
