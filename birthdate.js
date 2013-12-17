@@ -974,7 +974,7 @@ var M$ = (function(my) {
                 }
             }
         }
-        self.bText = ko.observable();
+        self.bText = ko.observable('');
         self.insertPressed = function(s) {
             var t;
             if (s == 'earliest')
@@ -984,6 +984,14 @@ var M$ = (function(my) {
             pasteHtmlAtCaret(t, false, $('#customBirthdateDefinition').get(0));
             $('#customBirthdateDefinition').trigger('change'); // because it doesn't otherwise!
         };
+        self.customBirthdateReadout = ko.computed(function(){
+            var r = self.bText();
+            r = r.replace(/<input>/, 'INPUT');
+            r = r.replace(/<input[^>]*value="Earliest Birthdate"[^>]*>/g, 'EARLIEST');
+            r = r.replace(/<input[^>]*value="Latest Birthdate"[^>]*>/g, 'LATEST');
+            r = r.replace(/<input class="smallButtonDead" type="submit" value="Latest Birthdate"\/>/g, 'LATEST');
+            return r;
+        });
 
         self.restore = function(jsonThingsToRestore) {
             var thingsToRestore = JSON.parse(jsonThingsToRestore);
@@ -1016,18 +1024,18 @@ var M$ = (function(my) {
 
 $(document).ready(function() {
 //    http://stackoverflow.com/questions/1391278/contenteditable-change-events/6263537#6263537
-$('body').on('focus', '[contenteditable]', function() {
-    var $this = $(this);
-    $this.data('before', $this.html());
-    return $this;
-}).on('blur keyup paste input', '[contenteditable]', function() {
-    var $this = $(this);
-    if ($this.data('before') !== $this.html()) {
+    $('body').on('focus', '[contenteditable]', function() {
+        var $this = $(this);
         $this.data('before', $this.html());
-        $this.trigger('change');
-    }
-    return $this;
-});
+        return $this;
+    }).on('blur keyup paste input', '[contenteditable]', function() {
+        var $this = $(this);
+        if ($this.data('before') !== $this.html()) {
+            $this.data('before', $this.html());
+            $this.trigger('change');
+        }
+        return $this;
+    });
     var effectDuration = 500;
 
     var viewModel = new M$.viewModel();
@@ -1064,25 +1072,25 @@ $('body').on('focus', '[contenteditable]', function() {
     //http://stackoverflow.com/questions/10296625/contenteditable-binding-for-knockoutjs
     // rpniemeyer's suggestion http://jsfiddle.net/rniemeyer/JksKx/
     ko.bindingHandlers.htmlValue = {
-    init: function(element, valueAccessor, allBindingsAccessor) {
-        ko.utils.registerEventHandler(element, "change", function() {
-            console.log('CHANGE event here');
-            var modelValue = valueAccessor();
-            var elementValue = element.innerHTML;
-            if (ko.isWriteableObservable(modelValue)) {
-                modelValue(elementValue);
-            }
-            else { //handle non-observable one-way binding
-                var allBindings = allBindingsAccessor();
-                if (allBindings['_ko_property_writers'] && allBindings['_ko_property_writers'].htmlValue) allBindings['_ko_property_writers'].htmlValue(elementValue);
-            }
-        });
-    },
-    update: function(element, valueAccessor) {
-        var value = ko.utils.unwrapObservable(valueAccessor()) || "";
-        element.innerHTML = value;
-    }
-};
+        init: function(element, valueAccessor, allBindingsAccessor) {
+            ko.utils.registerEventHandler(element, "change", function() {
+                var modelValue = valueAccessor();
+                var elementValue = element.innerHTML;
+                if (ko.isWriteableObservable(modelValue)) {
+                    modelValue(elementValue);
+                }
+                else { //handle non-observable one-way binding
+                    var allBindings = allBindingsAccessor();
+                    if (allBindings['_ko_property_writers'] && allBindings['_ko_property_writers'].htmlValue)
+                        allBindings['_ko_property_writers'].htmlValue(elementValue);
+                }
+            });
+        },
+        update: function(element, valueAccessor) {
+            var value = ko.utils.unwrapObservable(valueAccessor()) || "";
+            element.innerHTML = value;
+        }
+    };
 
     ko.applyBindings(viewModel);
     console.log('Hello!');
