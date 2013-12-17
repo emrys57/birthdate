@@ -974,8 +974,15 @@ var M$ = (function(my) {
                 }
             }
         }
-        self.insertPressed = function() {
-            pasteHtmlAtCaret('<input class="smallButton" type="submit" value="hello!"/>', false, $('#customBirthdateDefinition').get(0));
+        self.bText = ko.observable();
+        self.insertPressed = function(s) {
+            var t;
+            if (s == 'earliest')
+                t = '<input class="smallButtonDead" type="submit" value="Earliest Birthdate"/>';
+            else
+                t = '<input class="smallButtonDead" type="submit" value="Latest Birthdate"/>';
+            pasteHtmlAtCaret(t, false, $('#customBirthdateDefinition').get(0));
+            $('#customBirthdateDefinition').trigger('change'); // because it doesn't otherwise!
         };
 
         self.restore = function(jsonThingsToRestore) {
@@ -1008,33 +1015,19 @@ var M$ = (function(my) {
 }(M$ || {}));
 
 $(document).ready(function() {
-    jQuery.fn.extend({
-        insertAtCaret: function(myValue) {
-            return this.each(function(i) {
-                if (document.selection) {
-                    //For browsers like Internet Explorer
-                    this.focus();
-                    sel = document.selection.createRange();
-                    sel.text = myValue;
-                    this.focus();
-                }
-                else if (this.selectionStart || this.selectionStart == '0') {
-                    //For browsers like Firefox and Webkit based
-                    var startPos = this.selectionStart;
-                    var endPos = this.selectionEnd;
-                    var scrollTop = this.scrollTop;
-                    this.value = this.value.substring(0, startPos) + myValue + this.value.substring(endPos, this.value.length);
-                    this.focus();
-                    this.selectionStart = startPos + myValue.length;
-                    this.selectionEnd = startPos + myValue.length;
-                    this.scrollTop = scrollTop;
-                } else {
-                    this.value += myValue;
-                    this.focus();
-                }
-            });
-        }
-    });
+//    http://stackoverflow.com/questions/1391278/contenteditable-change-events/6263537#6263537
+$('body').on('focus', '[contenteditable]', function() {
+    var $this = $(this);
+    $this.data('before', $this.html());
+    return $this;
+}).on('blur keyup paste input', '[contenteditable]', function() {
+    var $this = $(this);
+    if ($this.data('before') !== $this.html()) {
+        $this.data('before', $this.html());
+        $this.trigger('change');
+    }
+    return $this;
+});
     var effectDuration = 500;
 
     var viewModel = new M$.viewModel();
@@ -1068,6 +1061,29 @@ $(document).ready(function() {
                 $(element).slideUp(effectDuration);
         }
     };
+    //http://stackoverflow.com/questions/10296625/contenteditable-binding-for-knockoutjs
+    // rpniemeyer's suggestion http://jsfiddle.net/rniemeyer/JksKx/
+    ko.bindingHandlers.htmlValue = {
+    init: function(element, valueAccessor, allBindingsAccessor) {
+        ko.utils.registerEventHandler(element, "change", function() {
+            console.log('CHANGE event here');
+            var modelValue = valueAccessor();
+            var elementValue = element.innerHTML;
+            if (ko.isWriteableObservable(modelValue)) {
+                modelValue(elementValue);
+            }
+            else { //handle non-observable one-way binding
+                var allBindings = allBindingsAccessor();
+                if (allBindings['_ko_property_writers'] && allBindings['_ko_property_writers'].htmlValue) allBindings['_ko_property_writers'].htmlValue(elementValue);
+            }
+        });
+    },
+    update: function(element, valueAccessor) {
+        var value = ko.utils.unwrapObservable(valueAccessor()) || "";
+        element.innerHTML = value;
+    }
+};
+
     ko.applyBindings(viewModel);
     console.log('Hello!');
     M$.checkRestore(viewModel);

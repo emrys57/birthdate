@@ -162,11 +162,12 @@ and open the template in the editor.
                     <div data-bind="slideContent2: customBirthdates" style="display: none">
                         <div >
                             Touch to insert:
-                            <input title='Insert Earliest Birthdate into custom display' data-bind="click: insertPressed" type='submit' class='smallButton' style="width: 10em;" value='Earliest Birthdate' />
-                            <input title='Insert Latest Birthdate into custom display' data-bind="click: insertPressed" type='submit' class='smallButton' style="width: 10em;" value='Latest Birthdate' />
+                            <input title='Insert Earliest Birthdate into custom display' data-bind="click: function() { insertPressed('earliest');}" type='submit' class='smallButton' style="width: 10em;" value='Earliest Birthdate' />
+                            <input title='Insert Latest Birthdate into custom display' data-bind="click: function() { insertPressed('latest');}" type='submit' class='smallButton' style="width: 10em;" value='Latest Birthdate' />
                             or type any text you want.
                             <div></div>
-                            <div contenteditable="true" class="editable" id="customBirthdateDefinition"></div>
+                            <div contenteditable="true" class="editable" id="customBirthdateDefinition" data-bind="htmlValue: bText">Pardon?</div>
+                            <div data-bind="text: bText"></div>
                         </div>
                     </div>
                 </div>
