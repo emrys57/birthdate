@@ -883,7 +883,7 @@ var M$ = (function(my) {
         });
         self.saveButtonPressed = function() {
             var options = {};
-            var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit'];
+            var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit', 'bText', 'customBirthdates'];
             for (var i = 0; i < savedThings.length; i++) { // all are assumed to be ko functions
                 var a = self[savedThings[i]]();
                 if ((typeof a == 'undefined') || ((a !== '0') && (a == 0)) || (a == '')) // do not save it
@@ -913,7 +913,6 @@ var M$ = (function(my) {
             }
             return false;
         }
-
         function elementContainsSelection(el) {
             var sel;
             if (window.getSelection) {
@@ -976,6 +975,7 @@ var M$ = (function(my) {
         }
         self.bText = ko.observable('');
         self.insertPressed = function(s) {
+            $('#customBirthdateDefinition').focus(); // set up selection? If never touched?
             var t;
             if (s == 'earliest')
                 t = '<input class="smallButtonDead" type="submit" value="Earliest Birthdate"/>';
@@ -983,8 +983,9 @@ var M$ = (function(my) {
                 t = '<input class="smallButtonDead" type="submit" value="Latest Birthdate"/>';
             pasteHtmlAtCaret(t, false, $('#customBirthdateDefinition').get(0));
             $('#customBirthdateDefinition').trigger('change'); // because it doesn't otherwise!
+            $('#customBirthdateDefinition').focus(); // because we lose focus by clicking the button
         };
-        self.customBirthdateReadout = ko.computed(function(){
+        self.customBirthdateReadout = ko.computed(function() {
             var r = self.bText();
             r = r.replace(/<input>/, 'INPUT');
             r = r.replace(/<input[^>]*value="Earliest Birthdate"[^>]*>/g, 'EARLIEST');
@@ -1069,15 +1070,19 @@ $(document).ready(function() {
                 $(element).slideUp(effectDuration);
         }
     };
+
     //http://stackoverflow.com/questions/10296625/contenteditable-binding-for-knockoutjs
     // rpniemeyer's suggestion http://jsfiddle.net/rniemeyer/JksKx/
+    var alreadyInUpdate = false;
     ko.bindingHandlers.htmlValue = {
         init: function(element, valueAccessor, allBindingsAccessor) {
             ko.utils.registerEventHandler(element, "change", function() {
+                var elementValue = $(element).html();
                 var modelValue = valueAccessor();
-                var elementValue = element.innerHTML;
                 if (ko.isWriteableObservable(modelValue)) {
+                    alreadyInUpdate = true;
                     modelValue(elementValue);
+                    alreadyInUpdate = false;
                 }
                 else { //handle non-observable one-way binding
                     var allBindings = allBindingsAccessor();
@@ -1088,6 +1093,9 @@ $(document).ready(function() {
         },
         update: function(element, valueAccessor) {
             var value = ko.utils.unwrapObservable(valueAccessor()) || "";
+            if (alreadyInUpdate) {
+                return;
+            }
             element.innerHTML = value;
         }
     };
