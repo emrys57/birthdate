@@ -22,6 +22,15 @@ var ko = (function(my) {
 
 var M$ = (function(my) {
 
+    function monthNames(upperCase) {
+        var m = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'];
+        if (upperCase)
+            return m;
+        return m.toLowerCase();
+    }
+
     my.tooEarly = function(when) {
         // Julian dates are too early because the New Year was at March 25 in Britain!
         var jMinDate = new Date(Date.UTC(1752, 9 - 1, 14));
@@ -298,9 +307,7 @@ var M$ = (function(my) {
             var c = trimmed4.charAt(0);
             if (c >= 'a') { // it's a string
                 var month = trimmed4;//.substr(0,3);
-                var months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
-                    'january', 'february', 'march', 'april', 'may', 'june',
-                    'july', 'august', 'september', 'october', 'november', 'december'];
+                var months = monthNames(false); // lower case months
                 for (var i = 0; i < months.length; i++)
                     if (month === months[i]) {
                         var md = (i % 12) + 1;
@@ -883,7 +890,7 @@ var M$ = (function(my) {
         });
         self.saveButtonPressed = function() {
             var options = {};
-            var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit', 'bText', 'customBirthdates'];
+            var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit', 'bText', 'customBirthdates', 'dateText'];
             for (var i = 0; i < savedThings.length; i++) { // all are assumed to be ko functions
                 var a = self[savedThings[i]]();
                 if ((typeof a == 'undefined') || ((a !== '0') && (a == 0)) || (a == '')) // do not save it
@@ -973,6 +980,36 @@ var M$ = (function(my) {
                 }
             }
         }
+
+        function fdfv(d, s2) {
+            function inp(u) {
+                var t = '<input class="smallButtonDead" type="submit" value="' + u + '">';
+                return t;
+            }
+            var ddd = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+            var mmm = monthNames(true); // upper case months
+            s = s2;
+            do {
+                s2 = s;
+                s = s.replace(inp('yyyy'), d.getUTCFullYear());
+                s = s.replace(inp('mm'), d.getUTCMonth() + 1);
+                s = s.replace(inp('mmm'), mmm[d.getUTCMonth()]);
+                s = s.replace(inp('mmmm'), mmm[d.getUTCMonth() + 12]);
+                s = s.replace(inp('dd'), d.getUTCDate());
+                s = s.replace(inp('ddd'), ddd[d.getUTCDay()]);
+                s = s.replace(inp('day'), ddd[d.getUTCDay() + 7]);
+            } while (s != s2);
+            return s;
+        }
+        self.dateText = ko.observable('');
+        self.formattedEarliestDate = ko.computed(function() {
+            return fdfv(self.earliestBirthdate(), self.dateText());
+        });
+        
+        self.formattedLatestDate = ko.computed(function() {
+            return fdfv(self.latestBirthdate(), self.dateText());
+        });
         self.bText = ko.observable('');
         self.insertPressed = function(s) {
             $('#customBirthdateDefinition').focus(); // set up selection? If never touched?
@@ -985,12 +1022,22 @@ var M$ = (function(my) {
             $('#customBirthdateDefinition').trigger('change'); // because it doesn't otherwise!
             $('#customBirthdateDefinition').focus(); // because we lose focus by clicking the button
         };
+        self.insertDatePressed = function(s) {
+            $('#customDateDefinition').focus(); // set up selection? If never touched?
+            var t;
+            t = '<input class="smallButtonDead" type="submit" value="' + s + '"/>';
+            pasteHtmlAtCaret(t, false, $('#customDateDefinition').get(0));
+            $('#customDateDefinition').trigger('change'); // because it doesn't otherwise!
+            $('#customDateDefinition').focus(); // because we lose focus by clicking the button
+        };
         self.customBirthdateReadout = ko.computed(function() {
+            if (!self.customBirthdates())
+                return '';
             var r = self.bText();
             r = r.replace(/<input>/, 'INPUT');
-            r = r.replace(/<input[^>]*value="Earliest Birthdate"[^>]*>/g, 'EARLIEST');
-            r = r.replace(/<input[^>]*value="Latest Birthdate"[^>]*>/g, 'LATEST');
-            r = r.replace(/<input class="smallButtonDead" type="submit" value="Latest Birthdate"\/>/g, 'LATEST');
+            r = r.replace(/<input[^>]*value="Earliest Birthdate"[^>]*>/g, self.formattedEarliestDate());
+            r = r.replace(/<input[^>]*value="Latest Birthdate"[^>]*>/g, self.formattedLatestDate());
+            r = r.replace(/&nbsp;/g, ' ');
             return r;
         });
 

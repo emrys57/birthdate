@@ -115,8 +115,8 @@ and open the template in the editor.
                     </div>
                 </div>
                 <div class="ib" data-bind="if: earliestBirthdateTooEarly">
-                        <div class="ib julianWarning">Sorry! Too long ago.</div>
-                    </div>
+                    <div class="ib julianWarning">Sorry! Too long ago.</div>
+                </div>
                 <div class="redAlert" data-bind="if: birthdateImpossible">Impossible!!</div>
                 <br /><div class="parmTitle">Birth Latest:</div>
                 <div class="ib" data-bind="if: displayDefined">
@@ -130,6 +130,9 @@ and open the template in the editor.
                     </div>
                 </div>
                 <br />
+                <div data-bind="if: customBirthdates">
+                    <div data-bind="text: customBirthdateReadout"></div>
+                </div>
             </div>
         </div>
         <!--        <div class="mainDisplay" >
@@ -148,7 +151,7 @@ and open the template in the editor.
             <input title='Create a URL you can bookmark with these options' data-bind="click: saveButtonPressed, clickBubble: false" type='submit' id='saveButton2' class='smallButton' style="width: 10em;" value='Save Options' />
             <input title='Adjust the display in detail' data-bind="click: settingsButtonPressed, value: settingsOpen()? 'Close Settings': 'Settings'" type='submit' id='settingsButton' class='smallButton' style="width: 10em; margin-left: 3em;"  />
             <!--<div class="linkzHelpButton" style="margin-left: 10px;" id="saveButtonHelp"></div>-->
-            
+
             <div style="float: right; display: inline-block;"><a href="http://www.eversholt.org.uk/blog/?cat=3">Much more info here!</a></div>
             <div></div>
             <div style="display: inline-block; position: absolute; margin-top: 0.5em;">
@@ -161,14 +164,28 @@ and open the template in the editor.
                     <label class="checkboxLabel"><input type="checkbox" class="checkboxInput" data-bind="checked: customBirthdates"> Show custom formatted birthdates.</label>
                     <div data-bind="slideContent2: customBirthdates" style="display: none">
                         <div >
+                            <h3>Custom date format:</h3>
+                            Touch to insert:
+                            <input title='Insert yyyy into date' data-bind="click: function() { insertDatePressed('yyyy');}" type='submit' class='smallButton' style="width: 6em;" value='YYYY' />
+                            <input title='Insert mm into date' data-bind="click: function() { insertDatePressed('mm');}" type='submit' class='smallButton' style="width: 6em;" value='MM' />
+                            <input title='Insert mmm into date' data-bind="click: function() { insertDatePressed('mmm');}" type='submit' class='smallButton' style="width: 6em;" value='MMM' />
+                            <input title='Insert mmmm into date' data-bind="click: function() { insertDatePressed('mmmm');}" type='submit' class='smallButton' style="width: 6em;" value='MMMM' />
+                            <input title='Insert dd into date' data-bind="click: function() { insertDatePressed('dd');}" type='submit' class='smallButton' style="width: 6em;" value='DD' />
+                            <input title='Insert ddd into date' data-bind="click: function() { insertDatePressed('ddd');}" type='submit' class='smallButton' style="width: 6em;" value='DDD' />
+                            <input title='Insert day into date' data-bind="click: function() { insertDatePressed('day');}" type='submit' class='smallButton' style="width: 6em;" value='day' />
+                            or type any text you want.
+                            <div></div>
+                            <div contenteditable="true" class="editable" id="customDateDefinition" data-bind="htmlValue: dateText"></div>
+                        </div>
+                        <div >
+                            <h3>Custom between-dates format:</h3>
                             Touch to insert:
                             <input title='Insert Earliest Birthdate into custom display' data-bind="click: function() { insertPressed('earliest');}" type='submit' class='smallButton' style="width: 10em;" value='Earliest Birthdate' />
                             <input title='Insert Latest Birthdate into custom display' data-bind="click: function() { insertPressed('latest');}" type='submit' class='smallButton' style="width: 10em;" value='Latest Birthdate' />
                             or type any text you want.
                             <div></div>
                             <div contenteditable="true" class="editable" id="customBirthdateDefinition" data-bind="htmlValue: bText">Pardon?</div>
-                            <div data-bind="text: bText"></div>
-                            <div data-bind="text: customBirthdateReadout"></div>
+                            <!-- <div data-bind="text: bText"></div> -->
                         </div>
                     </div>
                 </div>
