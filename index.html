@@ -11,6 +11,7 @@ and open the template in the editor.
         <link rel="stylesheet" type="text/css" href="localcss.css" />
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
         <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/knockout/2.3.0/knockout-min.js'></script>
+        <script type='text/javascript' src='ZeroClipboard.min.js'></script>
         <script type='text/javascript' src='birthdate.js'></script>
         <script type='text/javascript' src='dismiss.js'></script>
     </head>
@@ -131,7 +132,11 @@ and open the template in the editor.
                 </div>
                 <br />
                 <div data-bind="if: customBirthdates">
-                    <div data-bind="text: customBirthdateReadout"></div>
+                    <div class="drLabel">Birth</div>
+                    <input type="submit" class="smallButton copyButton" value="Copy" id="copy-button" data-clipboard-target="drDateValue" data-bind="css: {displayNone: !copyPossible()}"/>
+                    <div class="drValue" id="drDateValue" data-bind="html: customBirthdateReadout"></div>
+                    <div></div>
+       <!--             <div data-bind="text: customBirthdateReadout"></div> -->
                 </div>
             </div>
         </div>
@@ -161,18 +166,17 @@ and open the template in the editor.
             </div>
             <div data-bind="slideContent: settingsOpen" class="settings">
                 <div class="content" style="display: none;">
-                    <label class="checkboxLabel"><input type="checkbox" class="checkboxInput" data-bind="checked: customBirthdates"> Show custom formatted birthdates.</label>
                     <div data-bind="slideContent2: customBirthdates" style="display: none">
                         <div >
                             <h3>Custom date format:</h3>
                             Touch to insert:
-                            <input title='Insert yyyy into date' data-bind="click: function() { insertDatePressed('yyyy');}" type='submit' class='smallButton' style="width: 6em;" value='YYYY' />
-                            <input title='Insert mm into date' data-bind="click: function() { insertDatePressed('mm');}" type='submit' class='smallButton' style="width: 6em;" value='MM' />
-                            <input title='Insert mmm into date' data-bind="click: function() { insertDatePressed('mmm');}" type='submit' class='smallButton' style="width: 6em;" value='MMM' />
-                            <input title='Insert mmmm into date' data-bind="click: function() { insertDatePressed('mmmm');}" type='submit' class='smallButton' style="width: 6em;" value='MMMM' />
-                            <input title='Insert dd into date' data-bind="click: function() { insertDatePressed('dd');}" type='submit' class='smallButton' style="width: 6em;" value='DD' />
-                            <input title='Insert ddd into date' data-bind="click: function() { insertDatePressed('ddd');}" type='submit' class='smallButton' style="width: 6em;" value='DDD' />
-                            <input title='Insert day into date' data-bind="click: function() { insertDatePressed('day');}" type='submit' class='smallButton' style="width: 6em;" value='day' />
+                            <input title='4-digit year' data-bind="click: function() { insertDatePressed('yyyy');}" type='submit' class='smallButton' style="width: 6em;" value='YYYY' />
+                            <input title='month 01-12' data-bind="click: function() { insertDatePressed('mm');}" type='submit' class='smallButton' style="width: 6em;" value='MM' />
+                            <input title='Month Jan-Dec' data-bind="click: function() { insertDatePressed('mmm');}" type='submit' class='smallButton' style="width: 6em;" value='MMM' />
+                            <input title='Month January-December' data-bind="click: function() { insertDatePressed('mmmm');}" type='submit' class='smallButton' style="width: 6em;" value='MMMM' />
+                            <input title='Day of month 01-31' data-bind="click: function() { insertDatePressed('dd');}" type='submit' class='smallButton' style="width: 6em;" value='DD' />
+                            <input title='Day of Week Mon-Sun' data-bind="click: function() { insertDatePressed('ddd');}" type='submit' class='smallButton' style="width: 6em;" value='DDD' />
+                            <input title='Day of week Monday-Sunday' data-bind="click: function() { insertDatePressed('day');}" type='submit' class='smallButton' style="width: 6em;" value='day' />
                             or type any text you want.
                             <div></div>
                             <div contenteditable="true" class="editable" id="customDateDefinition" data-bind="htmlValue: dateText"></div>

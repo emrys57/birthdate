@@ -20,6 +20,56 @@ var ko = (function(my) {
 }(ko || {}));
 
 
+// https://github.com/zeroclipboard/ZeroClipboard/blob/master/docs/instructions.md
+function setUpZero(viewModel) {
+
+    function $findValue(button) { // find the $value field from the associated button
+        var a = $(button).parent().find('.drValue');
+//        console.log('findValue: ', button, a);
+        return a;
+    }
+
+    ZeroClipboard.setDefaults({
+        moviePath: './ZeroClipboard.swf',
+        hoverClass: 'smallButtonHover',
+        activeClass: 'smallButtonActive'
+    });
+    var clip = new ZeroClipboard($('.copyButton'));
+//    clip.on('complete', function(client, args) {
+//        console.log("Copied text to clipboard: " + args.text);
+//    });
+    clip.on('mouseover', function(client, args) {
+        var $value = $findValue(this);
+        $findValue(this).addClass('clipHover');
+    });
+
+    clip.on('mouseout', function(client) {
+        $findValue(this).removeClass('clipHover');
+    });
+
+    clip.on('mousedown', function(client) {
+        var $value = $findValue(this);
+        $value.addClass('clipActive clipPing');
+        window.setTimeout(function() {
+            $value.removeClass('clipPing');
+        }, 300); // do it here rather than on complete because that doesn't happen until mouseup
+    });
+
+    clip.on('mouseup', function(client) {
+        $findValue(this).removeClass('clipActive');
+    });
+
+    clip.on('noflash', function() {
+        viewModel.copyPossible(false);
+//        viewModel.errorFlash('Sorry! You need Adobe Flash to make the <copy> feature work. You can just select the text and copy it by hand.');
+    });
+    clip.on('wrongflash', function() {
+        viewModel.copyPossible(false);
+//        viewModel.errorFlash('Sorry! You need a more recent Adobe Flash to make the <copy> feature work. You can just select the text and copy it by hand.');
+    });
+}
+
+
 var M$ = (function(my) {
 
     function monthNames(upperCase) {
@@ -873,6 +923,7 @@ var M$ = (function(my) {
         self.earliestBirthdateTooEarly = ko.computed(function() {
             return M$.tooEarly(self.earliestBirthdate());
         });
+        self.copyPossible = ko.observable(true);
         self.onDate1ShowJulian = ko.computed(function() {
             return self.onDate1Valid() && M$.isJulian(self.onDate1Min());
         });
@@ -890,7 +941,7 @@ var M$ = (function(my) {
         });
         self.saveButtonPressed = function() {
             var options = {};
-            var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit', 'bText', 'customBirthdates', 'dateText'];
+            var savedThings = ['calculation', 'ageYears', 'ageMonths', 'ageWeeks', 'ageDays', 'onDate1Year', 'onDate1Month', 'onDate1Day', 'ukCensusYear', 'briUnit', 'bTextStored', 'dateTextStored'];
             for (var i = 0; i < savedThings.length; i++) { // all are assumed to be ko functions
                 var a = self[savedThings[i]]();
                 if ((typeof a == 'undefined') || ((a !== '0') && (a == 0)) || (a == '')) // do not save it
@@ -903,7 +954,7 @@ var M$ = (function(my) {
             window.history.pushState({}, "", window.location.pathname + "?options=" + encodedJsonSavedOptions);
             $('#saveButtonConfirm').slideDown();
         };
-        self.customBirthdates = ko.observable(false);
+        self.customBirthdates = ko.observable(true);
         self.settingsOpen = ko.observable(false);
         self.settingsButtonPressed = function() {
             self.settingsOpen(!self.settingsOpen());
@@ -990,27 +1041,60 @@ var M$ = (function(my) {
 
             var mmm = monthNames(true); // upper case months
             s = s2;
+            var a;
             do {
                 s2 = s;
                 s = s.replace(inp('yyyy'), d.getUTCFullYear());
-                s = s.replace(inp('mm'), d.getUTCMonth() + 1);
+                a = ('00'+(d.getUTCMonth() + 1)).substr(-2); // make sure mm is 2 digits
+                s = s.replace(inp('mm'), a);
                 s = s.replace(inp('mmm'), mmm[d.getUTCMonth()]);
                 s = s.replace(inp('mmmm'), mmm[d.getUTCMonth() + 12]);
-                s = s.replace(inp('dd'), d.getUTCDate());
+                a = ('00'+(d.getUTCDate())).substr(-2); // make sure dd is 2 digits
+                s = s.replace(inp('dd'), a); 
                 s = s.replace(inp('ddd'), ddd[d.getUTCDay()]);
                 s = s.replace(inp('day'), ddd[d.getUTCDay() + 7]);
             } while (s != s2);
             return s;
         }
-        self.dateText = ko.observable('');
+        var defaultDateText = '<input class="smallButtonDead" type="submit" value="yyyy">-<input class="smallButtonDead" type="submit" value="mm">-<input class="smallButtonDead" type="submit" value="dd">';
+        var defaultBText = 'Between <input class="smallButtonDead" type="submit" value="Earliest Birthdate"> and <input class="smallButtonDead" type="submit" value="Latest Birthdate">';
+        // dateTextStored is the version of dateText which is stored in the URL.
+        // Done like this so that the default format son't take up any space in the URL
+
+        self.dateText = ko.observable(defaultDateText);
+        self.dateTextStored = ko.computed({
+            read: function() {
+                if (self.dateText() == '') // if dateText is blank, return a space, so it will be stored in URL
+                    return ' ';
+                if (self.dateText() == defaultDateText) // if dateText is the default, return empty, so it won't be stored in the URL.
+                    return '';
+                return self.dateText();
+            },
+            write: function(v) {
+                self.dateText(v);
+            }
+        });
+
         self.formattedEarliestDate = ko.computed(function() {
             return fdfv(self.earliestBirthdate(), self.dateText());
         });
-        
+
         self.formattedLatestDate = ko.computed(function() {
             return fdfv(self.latestBirthdate(), self.dateText());
         });
-        self.bText = ko.observable('');
+        self.bText = ko.observable(defaultBText);
+        self.bTextStored = ko.computed({
+            read: function() {
+                if (self.bText() == '')
+                    return ' ';
+                if (self.bText() == defaultBText)
+                    return '';
+                return self.bText();
+            },
+            write: function(v) {
+                self.bText(v);
+            }
+        });
         self.insertPressed = function(s) {
             $('#customBirthdateDefinition').focus(); // set up selection? If never touched?
             var t;
@@ -1032,6 +1116,8 @@ var M$ = (function(my) {
         };
         self.customBirthdateReadout = ko.computed(function() {
             if (!self.customBirthdates())
+                return '';
+            if (!self.displayDefined())
                 return '';
             var r = self.bText();
             r = r.replace(/<input>/, 'INPUT');
@@ -1150,4 +1236,7 @@ $(document).ready(function() {
     ko.applyBindings(viewModel);
     console.log('Hello!');
     M$.checkRestore(viewModel);
+    window.setTimeout(function() {
+        setUpZero(viewModel); // Does not work unless I delay it. This is for the copy-to-clipboard function.
+    }, 1000);
 });
