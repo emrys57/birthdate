@@ -574,7 +574,7 @@ var M$ = (function(my) {
             var result = {y: dy, m: dm, w: dw, d: dd};
             var units1 = '' + (units.y ? 'y' : '-') + (units.m ? 'm' : '-') + (units.w ? 'w' : '-') + (units.d ? 'd' : '-');
             var result1 = '' + result.y + '-' + result.m + '-' + result.w + '-' + result.d;
-            console.log('calendarDistance:', result1, ed.toUTCString(), ld.toUTCString(), units1, ad, bd, cd, fd, gd);
+//            console.log('calendarDistance:', result1, ed.toUTCString(), ld.toUTCString(), units1, ad, bd, cd, fd, gd);
             return result;
         }
 
@@ -705,7 +705,7 @@ var M$ = (function(my) {
                     return e;
                 for (; ; ) {
                     var diff = calendarDistance(d, self.onDate1Min(), units); // distance in required units, with mandatory days
-                    console.log('diff:', (set.y ? diff.y : ' ') + ',' + (set.m ? diff.m : ' ') + ',' + (set.w ? diff.w : ' ') + ',' + diff.d, self.onDate1Min().toUTCString());
+//                    console.log('diff:', (set.y ? diff.y : ' ') + ',' + (set.m ? diff.m : ' ') + ',' + (set.w ? diff.w : ' ') + ',' + diff.d, self.onDate1Min().toUTCString());
                     var moveBack = false;
                     var overshot = false;
                     if ((set.y) && (diff.y < self.ageYMax())) { // years difference is too small, move birthdate backwards
@@ -728,19 +728,19 @@ var M$ = (function(my) {
                     }
                     if (!moveBack && !overshot) {
                         earliestAcceptableDate = new Date(d);
-                        console.log('acceptable:', d.toUTCString(), 'min1:' + self.onDate1Min().toUTCString());
+//                        console.log('acceptable:', d.toUTCString(), 'min1:' + self.onDate1Min().toUTCString());
                     }
                     if (overshot) {
-                        console.log('overshot:', d.toUTCString(), 'min2:' + self.onDate1Min().toUTCString());
+//                        console.log('overshot:', d.toUTCString(), 'min2:' + self.onDate1Min().toUTCString());
                         break;
                     }
                     d = new Date(d.setDate(d.getDate() - 1));
-                    console.log('moving back to ', d.toUTCString(), 'min3:' + self.onDate1Min().toUTCString());
+//                    console.log('moving back to ', d.toUTCString(), 'min3:' + self.onDate1Min().toUTCString());
                 }
                 self.earliestBirthdateImpossible(!earliestAcceptableDate);
                 if (self.earliestBirthdateImpossible())
                     return e;
-                console.log('earliestAcceptableDate', earliestAcceptableDate.toUTCString());
+//                console.log('earliestAcceptableDate', earliestAcceptableDate.toUTCString());
                 return earliestAcceptableDate;
             }
         });
@@ -777,7 +777,7 @@ var M$ = (function(my) {
 
                 for (; ; ) {
                     var diff = calendarDistance(d, self.onDate1Max(), units); // distance in required units, with mandatory days
-                    console.log('diff:', (set.y ? diff.y : ' ') + ',' + (set.m ? diff.m : ' ') + ',' + (set.w ? diff.w : ' ') + ',' + diff.d, self.onDate1Max().toUTCString());
+//                    console.log('diff:', (set.y ? diff.y : ' ') + ',' + (set.m ? diff.m : ' ') + ',' + (set.w ? diff.w : ' ') + ',' + diff.d, self.onDate1Max().toUTCString());
                     var moveForward = false;
                     var overshot = false;
 
@@ -802,20 +802,20 @@ var M$ = (function(my) {
 
                     if (!moveForward && !overshot) {
                         latestAcceptableDate = new Date(d);
-                        console.log('acceptable:', d.toUTCString(), 'max1:' + self.onDate1Max().toUTCString());
+//                        console.log('acceptable:', d.toUTCString(), 'max1:' + self.onDate1Max().toUTCString());
                     }
                     if (overshot) {
-                        console.log('overshot:', d.toUTCString(), 'max2:' + self.onDate1Max().toUTCString());
+//                        console.log('overshot:', d.toUTCString(), 'max2:' + self.onDate1Max().toUTCString());
                         break;
                     }
                     d = new Date(d.setUTCDate(d.getUTCDate() + 1));
-                    console.log('moving forward to ', d.toUTCString(), 'max3:' + self.onDate1Max().toUTCString());
+//                    console.log('moving forward to ', d.toUTCString(), 'max3:' + self.onDate1Max().toUTCString());
                 }
 
                 self.latestBirthdateImpossible(!latestAcceptableDate);
                 if (self.latestBirthdateImpossible())
                     return new Date(self.onDate1Max());
-                console.log('latestAcceptableDate', latestAcceptableDate.toUTCString());
+//                console.log('latestAcceptableDate', latestAcceptableDate.toUTCString());
                 return latestAcceptableDate;
             }
         });
@@ -924,6 +924,7 @@ var M$ = (function(my) {
             return M$.tooEarly(self.earliestBirthdate());
         });
         self.copyPossible = ko.observable(true);
+        self.isFirefox = ko.observable(/mozilla/.test(navigator.userAgent.toLowerCase()) && !/webkit/.test(navigator.userAgent.toLowerCase()));
         self.onDate1ShowJulian = ko.computed(function() {
             return self.onDate1Valid() && M$.isJulian(self.onDate1Min());
         });
@@ -1056,17 +1057,17 @@ var M$ = (function(my) {
             } while (s != s2);
             return s;
         }
-        var defaultDateText = '<input class="smallButtonDead" type="submit" value="yyyy">-<input class="smallButtonDead" type="submit" value="mm">-<input class="smallButtonDead" type="submit" value="dd">';
-        var defaultBText = 'Between <input class="smallButtonDead" type="submit" value="Earliest Birthdate"> and <input class="smallButtonDead" type="submit" value="Latest Birthdate">';
+        self.defaultDateText = ko.computed(function(){ return '<input class="smallButtonDead" type="submit" value="yyyy">-<input class="smallButtonDead" type="submit" value="mm">-<input class="smallButtonDead" type="submit" value="dd">' + (self.isFirefox()?'&nbsp;': '');});
+        self.defaultBText = ko.computed(function(){return 'Between <input class="smallButtonDead" type="submit" value="Earliest Birthdate"> and <input class="smallButtonDead" type="submit" value="Latest Birthdate">' + (self.isFirefox()?'&nbsp;': '');});
         // dateTextStored is the version of dateText which is stored in the URL.
         // Done like this so that the default format son't take up any space in the URL
 
-        self.dateText = ko.observable(defaultDateText);
+        self.dateText = ko.observable(self.defaultDateText());
         self.dateTextStored = ko.computed({
             read: function() {
                 if (self.dateText() == '') // if dateText is blank, return a space, so it will be stored in URL
                     return ' ';
-                if (self.dateText() == defaultDateText) // if dateText is the default, return empty, so it won't be stored in the URL.
+                if (self.dateText() == self.defaultDateText()) // if dateText is the default, return empty, so it won't be stored in the URL.
                     return '';
                 return self.dateText();
             },
@@ -1082,12 +1083,12 @@ var M$ = (function(my) {
         self.formattedLatestDate = ko.computed(function() {
             return fdfv(self.latestBirthdate(), self.dateText());
         });
-        self.bText = ko.observable(defaultBText);
+        self.bText = ko.observable(self.defaultBText());
         self.bTextStored = ko.computed({
             read: function() {
                 if (self.bText() == '')
                     return ' ';
-                if (self.bText() == defaultBText)
+                if (self.bText() == self.defaultBText())
                     return '';
                 return self.bText();
             },
