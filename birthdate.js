@@ -1057,8 +1057,10 @@ var M$ = (function(my) {
             } while (s != s2);
             return s;
         }
-        self.defaultDateText = ko.computed(function(){ return '<input class="smallButtonDead" type="submit" value="yyyy">-<input class="smallButtonDead" type="submit" value="mm">-<input class="smallButtonDead" type="submit" value="dd">' + (self.isFirefox()?'&nbsp;': '');});
-        self.defaultBText = ko.computed(function(){return 'Between <input class="smallButtonDead" type="submit" value="Earliest Birthdate"> and <input class="smallButtonDead" type="submit" value="Latest Birthdate">' + (self.isFirefox()?'&nbsp;': '');});
+//        var klugeSpace = '&#xfeff;';
+    var klugeSpace = '&nbsp;';
+        self.defaultDateText = ko.computed(function(){ return '<input class="smallButtonDead" type="submit" value="yyyy">-<input class="smallButtonDead" type="submit" value="mm">-<input class="smallButtonDead" type="submit" value="dd">' + (self.isFirefox()?klugeSpace: '');});
+        self.defaultBText = ko.computed(function(){return 'Between <input class="smallButtonDead" type="submit" value="Earliest Birthdate"> and <input class="smallButtonDead" type="submit" value="Latest Birthdate">' + (self.isFirefox()?klugeSpace: '');});
         // dateTextStored is the version of dateText which is stored in the URL.
         // Done like this so that the default format son't take up any space in the URL
 

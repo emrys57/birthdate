@@ -12,10 +12,16 @@ and open the template in the editor.
         <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
         <script type='text/javascript' src='http://cdnjs.cloudflare.com/ajax/libs/knockout/2.3.0/knockout-min.js'></script>
         <script type='text/javascript' src='ZeroClipboard.min.js'></script>
+        <link rel="stylesheet" href="gh-fork-ribbon.css" />
         <script type='text/javascript' src='birthdate.js'></script>
         <script type='text/javascript' src='dismiss.js'></script>
     </head>
     <body>
+        <div class="github-fork-ribbon-wrapper right">
+            <div class="github-fork-ribbon">
+                <a href="https://github.com/emrys57/birthdate">Fork me on GitHub</a>
+            </div>
+        </div>
         <div class="mainDisplay">
             <h1>Birthdate and Age Calculator</h1>
             <div class="lesser">
@@ -140,7 +146,7 @@ and open the template in the editor.
                     <input type="submit" class="smallButton copyButton" value="Copy" id="copy-button" data-clipboard-target="drDateValue" data-bind="css: {displayNone: !copyPossible(), greyed: !displayDefined()}"/>
                     <div class="drValue" id="drDateValue" data-bind="html: customBirthdateReadout"></div>
                     <div></div>
-       <!--             <div data-bind="text: customBirthdateReadout"></div> -->
+                    <!--             <div data-bind="text: customBirthdateReadout"></div> -->
                 </div>
             </div>
         </div>
